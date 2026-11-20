@@ -1,0 +1,21 @@
+nearly049 travel 0.00 mm, F 0 N, Delta V 0 mm^3, RMS(J-1) 0
+nearly049 travel 0.12 mm, F 0.0224876 N, Delta V -0.0802883 mm^3, RMS(J-1) 0.000199069
+nearly049 travel 0.32 mm, F 0.101673 N, Delta V -0.358101 mm^3, RMS(J-1) 0.000645136
+nearly049 travel 0.52 mm, F 0.223493 N, Delta V -0.776084 mm^3, RMS(J-1) 0.001193
+nearly049 travel 0.72 mm, F 0.379704 N, Delta V -1.29654 mm^3, RMS(J-1) 0.00183287
+nearly049 travel 0.92 mm, F 0.583024 N, Delta V -1.96331 mm^3, RMS(J-1) 0.00251768
+nearly049 travel 1.12 mm, F 0.817282 N, Delta V -2.70753 mm^3, RMS(J-1) 0.00326914
+nearly049 travel 1.32 mm, F 1.07927 N, Delta V -3.51052 mm^3, RMS(J-1) 0.00407367
+nearly049 travel 1.52 mm, F 1.38545 N, Delta V -4.43967 mm^3, RMS(J-1) 0.00488512
+nearly049 travel 1.72 mm, F 1.71714 N, Delta V -5.4107 mm^3, RMS(J-1) 0.00573548
+nearly049 travel 1.92 mm, F 2.07293 N, Delta V -6.41167 mm^3, RMS(J-1) 0.00661796
+nearly049 travel 2.12 mm, F 2.45165 N, Delta V -7.43197 mm^3, RMS(J-1) 0.00752483
+nearly049 travel 2.32 mm, F 2.85256 N, Delta V -8.46611 mm^3, RMS(J-1) 0.00844443
+nearly049 travel 2.52 mm, F 3.27416 N, Delta V -9.51165 mm^3, RMS(J-1) 0.00936053
+nearly049 travel 2.72 mm, F 3.71225 N, Delta V -10.551 mm^3, RMS(J-1) 0.010267
+nearly049 travel 2.92 mm, F 4.16237 N, Delta V -11.5646 mm^3, RMS(J-1) 0.0111582
+nearly049 travel 3.12 mm, F 4.62006 N, Delta V -12.5382 mm^3, RMS(J-1) 0.0120227
+nearly049 travel 3.32 mm, F 5.08083 N, Delta V -13.4604 mm^3, RMS(J-1) 0.0128458
+nearly049 travel 3.52 mm, F 5.54161 N, Delta V -14.3241 mm^3, RMS(J-1) 0.013612
+nearly049 travel 3.72 mm, F 6.00395 N, Delta V -15.1276 mm^3, RMS(J-1) 0.0143097
+nearly049 finished 19/19 load steps in 180.0 s. travel limit reached

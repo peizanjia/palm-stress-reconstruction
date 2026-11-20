@@ -1,0 +1,26 @@
+incompressible_coarse travel 0.00 mm, F 0 N, Delta V 0 mm^3, RMS(J-1) 0
+incompressible_coarse travel 0.12 mm, F 0.019793 N, Delta V 5.45697e-12 mm^3, RMS(J-1) 0.00037597
+incompressible_coarse travel 0.32 mm, F 0.0817677 N, Delta V -5.22978e-08 mm^3, RMS(J-1) 0.00111994
+incompressible_coarse travel 0.52 mm, F 0.190512 N, Delta V 5.45697e-12 mm^3, RMS(J-1) 0.00192128
+incompressible_coarse travel 0.72 mm, F 0.315146 N, Delta V 9.09495e-12 mm^3, RMS(J-1) 0.00295308
+incompressible_coarse travel 0.92 mm, F 0.494425 N, Delta V 9.09495e-12 mm^3, RMS(J-1) 0.00387537
+incompressible_coarse travel 1.12 mm, F 0.698491 N, Delta V 3.82533e-09 mm^3, RMS(J-1) 0.00495191
+incompressible_coarse travel 1.32 mm, F 0.920301 N, Delta V 1.09139e-11 mm^3, RMS(J-1) 0.00620055
+incompressible_coarse travel 1.52 mm, F 1.16851 N, Delta V 7.27596e-12 mm^3, RMS(J-1) 0.00751729
+incompressible_coarse travel 1.72 mm, F 1.45862 N, Delta V -6.76664e-10 mm^3, RMS(J-1) 0.00874377
+incompressible_coarse travel 1.92 mm, F 1.7714 N, Delta V -5.76601e-08 mm^3, RMS(J-1) 0.0100259
+incompressible_coarse travel 2.12 mm, F 2.10133 N, Delta V -3.4197e-10 mm^3, RMS(J-1) 0.0113913
+incompressible_coarse travel 2.32 mm, F 2.44775 N, Delta V -5.93536e-09 mm^3, RMS(J-1) 0.0128225
+incompressible_coarse travel 2.52 mm, F 2.80849 N, Delta V -3.78932e-08 mm^3, RMS(J-1) 0.0143172
+incompressible_coarse travel 2.72 mm, F 3.18078 N, Delta V 1.09139e-11 mm^3, RMS(J-1) 0.0158771
+incompressible_coarse travel 2.92 mm, F 3.55973 N, Delta V 9.09495e-12 mm^3, RMS(J-1) 0.0175327
+incompressible_coarse travel 3.12 mm, F 3.93503 N, Delta V 1.09139e-11 mm^3, RMS(J-1) 0.019411
+incompressible_coarse travel 3.32 mm, F 4.27905 N, Delta V -1.81899e-12 mm^3, RMS(J-1) 0.0220248
+incompressible_coarse finished 17/19 load steps in 203.5 s. Newton failed at travel 3.36020 mm near 3.35921 mm
+{Error using assert
+The archived case stopped before the requested travel.
+
+Error in run_compressibility_case (line 41)
+assert(height(summary)==numel(cfg.depths),'The archived case stopped before the requested travel.');
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+}

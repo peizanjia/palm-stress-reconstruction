@@ -1,0 +1,9 @@
+incompressible_common travel 0.00 mm, F 0 N, Delta V 0 mm^3, RMS(J-1) 0
+incompressible_common travel 0.12 mm, F 0.0167336 N, Delta V -6.58474e-10 mm^3, RMS(J-1) 0.000315491
+incompressible_common travel 0.32 mm, F 0.0799296 N, Delta V -7.27596e-12 mm^3, RMS(J-1) 0.000913933
+incompressible_common travel 0.52 mm, F 0.181674 N, Delta V -3.39605e-09 mm^3, RMS(J-1) 0.00159314
+incompressible_common travel 0.72 mm, F 0.309767 N, Delta V -3.63798e-12 mm^3, RMS(J-1) 0.00244097
+incompressible_common travel 0.92 mm, F 0.481541 N, Delta V -9.09495e-12 mm^3, RMS(J-1) 0.00329767
+incompressible_common travel 1.12 mm, F 0.67031 N, Delta V -6.54836e-11 mm^3, RMS(J-1) 0.00434236
+incompressible_common travel 1.32 mm, F 0.904376 N, Delta V -1.81899e-11 mm^3, RMS(J-1) 0.00533016
+incompressible_common travel 1.52 mm, F 1.16062 N, Delta V -1.81899e-12 mm^3, RMS(J-1) 0.0064248

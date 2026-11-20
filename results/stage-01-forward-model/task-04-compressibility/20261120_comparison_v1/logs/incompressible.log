@@ -1,0 +1,24 @@
+incompressible travel 0.00 mm, F 0 N, Delta V 0 mm^3, RMS(J-1) 0
+incompressible travel 0.12 mm, F 0.0167336 N, Delta V -6.58474e-10 mm^3, RMS(J-1) 0.000315491
+incompressible travel 0.32 mm, F 0.0799296 N, Delta V -7.27596e-12 mm^3, RMS(J-1) 0.000913933
+incompressible travel 0.52 mm, F 0.181674 N, Delta V -3.39605e-09 mm^3, RMS(J-1) 0.00159314
+incompressible travel 0.72 mm, F 0.309767 N, Delta V -3.63798e-12 mm^3, RMS(J-1) 0.00244097
+incompressible travel 0.92 mm, F 0.481541 N, Delta V -9.09495e-12 mm^3, RMS(J-1) 0.00329767
+incompressible travel 1.12 mm, F 0.67031 N, Delta V -6.54836e-11 mm^3, RMS(J-1) 0.00434236
+incompressible travel 1.32 mm, F 0.904376 N, Delta V -1.81899e-11 mm^3, RMS(J-1) 0.00533016
+incompressible travel 1.52 mm, F 1.16062 N, Delta V -1.81899e-12 mm^3, RMS(J-1) 0.0064248
+incompressible travel 1.72 mm, F 1.43586 N, Delta V -3.63798e-12 mm^3, RMS(J-1) 0.00763095
+incompressible travel 1.92 mm, F 1.73683 N, Delta V -6.62112e-10 mm^3, RMS(J-1) 0.00886545
+incompressible travel 2.12 mm, F 2.06634 N, Delta V -8.8894e-09 mm^3, RMS(J-1) 0.010058
+incompressible travel 2.32 mm, F 2.41334 N, Delta V -7.84312e-08 mm^3, RMS(J-1) 0.0112994
+incompressible travel 2.52 mm, F 2.77615 N, Delta V -3.63798e-12 mm^3, RMS(J-1) 0.0125866
+incompressible travel 2.72 mm, F 3.15247 N, Delta V -2.18279e-11 mm^3, RMS(J-1) 0.0139258
+incompressible travel 2.92 mm, F 3.53735 N, Delta V 0 mm^3, RMS(J-1) 0.0153775
+incompressible finished 15/19 load steps in 450.6 s. Newton failed at travel 3.06957 mm near 3.06858 mm
+{Error using assert
+The archived case stopped before the requested travel.
+
+Error in run_compressibility_case (line 41)
+save(fullfile(directory,'comparison.mat'),'r','meta','grids','seconds');
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+}

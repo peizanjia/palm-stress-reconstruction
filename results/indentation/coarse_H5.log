@@ -1,0 +1,5 @@
+H=5 elements=2400 status=Newton failed at travel 3.49244 mm near 3.49155 mm points=19
+    Travel_mm    CapDepth_mm    ContactRadius_mm    Force_N    Support_N    Penetration_mm     MinJ      Residual_N
+    _________    ___________    ________________    _______    _________    ______________    _______    __________
+
+      3.36         2.7156            3.7882         3.0794      3.0794         0.62363        0.39904    1.8772e-13

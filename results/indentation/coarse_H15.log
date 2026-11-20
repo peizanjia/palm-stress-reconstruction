@@ -1,0 +1,5 @@
+H=15 elements=3600 status=completed displacement range points=26
+    Travel_mm    CapDepth_mm    ContactRadius_mm    Force_N    Support_N    Penetration_mm     MinJ      Residual_N
+    _________    ___________    ________________    _______    _________    ______________    _______    __________
+
+      4.62         2.8548            3.8326         3.0788      3.0788         0.33827        0.62247    3.1061e-10

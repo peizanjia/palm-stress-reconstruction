@@ -1,0 +1,21 @@
+compressible045 travel 0.00 mm, F 0 N, Delta V 0 mm^3, RMS(J-1) 0
+compressible045 travel 0.12 mm, F 0.0160379 N, Delta V -0.246332 mm^3, RMS(J-1) 0.000324832
+compressible045 travel 0.32 mm, F 0.0746479 N, Delta V -1.13155 mm^3, RMS(J-1) 0.00104262
+compressible045 travel 0.52 mm, F 0.166509 N, Delta V -2.49124 mm^3, RMS(J-1) 0.00191329
+compressible045 travel 0.72 mm, F 0.280429 N, Delta V -4.12912 mm^3, RMS(J-1) 0.0029398
+compressible045 travel 0.92 mm, F 0.43368 N, Delta V -6.30297 mm^3, RMS(J-1) 0.00404432
+compressible045 travel 1.12 mm, F 0.600091 N, Delta V -8.57046 mm^3, RMS(J-1) 0.00528513
+compressible045 travel 1.32 mm, F 0.807156 N, Delta V -11.3736 mm^3, RMS(J-1) 0.00654363
+compressible045 travel 1.52 mm, F 1.03361 N, Delta V -14.3361 mm^3, RMS(J-1) 0.00789301
+compressible045 travel 1.72 mm, F 1.27571 N, Delta V -17.365 mm^3, RMS(J-1) 0.00932708
+compressible045 travel 1.92 mm, F 1.54714 N, Delta V -20.7011 mm^3, RMS(J-1) 0.0107582
+compressible045 travel 2.12 mm, F 1.84432 N, Delta V -24.2762 mm^3, RMS(J-1) 0.0121866
+compressible045 travel 2.32 mm, F 2.15879 N, Delta V -27.898 mm^3, RMS(J-1) 0.013649
+compressible045 travel 2.52 mm, F 2.49108 N, Delta V -31.5481 mm^3, RMS(J-1) 0.0151311
+compressible045 travel 2.72 mm, F 2.84148 N, Delta V -35.1985 mm^3, RMS(J-1) 0.0166215
+compressible045 travel 2.92 mm, F 3.2108 N, Delta V -38.8342 mm^3, RMS(J-1) 0.0181029
+compressible045 travel 3.12 mm, F 3.59954 N, Delta V -42.4276 mm^3, RMS(J-1) 0.0195608
+compressible045 travel 3.32 mm, F 4.00828 N, Delta V -45.9442 mm^3, RMS(J-1) 0.0209821
+compressible045 travel 3.52 mm, F 4.43791 N, Delta V -49.3421 mm^3, RMS(J-1) 0.0223557
+compressible045 travel 3.72 mm, F 4.88989 N, Delta V -52.5702 mm^3, RMS(J-1) 0.0236739
+compressible045 finished 19/19 load steps in 200.7 s. travel limit reached
