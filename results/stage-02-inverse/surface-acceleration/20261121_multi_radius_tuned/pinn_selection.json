@@ -1,0 +1,26 @@
+[
+  {
+    "weight": 0.001,
+    "train_s": 9.008830999955535,
+    "validation_scaled_MAE": 0.005769694223999977,
+    "selected_epoch": 81
+  },
+  {
+    "weight": 0.003,
+    "train_s": 9.121607700129971,
+    "validation_scaled_MAE": 0.00598986865952611,
+    "selected_epoch": 80
+  },
+  {
+    "weight": 0.01,
+    "train_s": 8.99870130000636,
+    "validation_scaled_MAE": 0.00830041617155075,
+    "selected_epoch": 87
+  },
+  {
+    "weight": 0.03,
+    "train_s": 8.638018399942666,
+    "validation_scaled_MAE": 0.013017149642109871,
+    "selected_epoch": 90
+  }
+]

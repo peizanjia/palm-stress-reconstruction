@@ -1,0 +1,4 @@
+train_small: 11/11 loaded frames in 37.62 s, travel limit reached
+train_large: 13/13 loaded frames in 45.78 s, travel limit reached
+validation: 13/13 loaded frames in 44.55 s, travel limit reached
+new_shape: 13/13 loaded frames in 44.22 s, travel limit reached

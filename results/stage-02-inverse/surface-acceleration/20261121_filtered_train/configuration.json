@@ -1,0 +1,24 @@
+{
+  "output": "results\\stage-02-inverse\\surface-acceleration\\20261121_filtered_train",
+  "held_out": "eccentric",
+  "epochs": 90,
+  "device": "cuda",
+  "canonical_center": true,
+  "checkpoint_dir": null,
+  "extra_test_dir": null,
+  "extra_test": [
+    "results\\stage-02-inverse\\surface-acceleration\\20261121_multi_radius\\new_shape.mat"
+  ],
+  "train_trajectory": [
+    "results\\stage-02-inverse\\surface-acceleration\\20261121_multi_radius\\train_small.mat",
+    "results\\stage-02-inverse\\surface-acceleration\\20261121_multi_radius\\train_large.mat"
+  ],
+  "validation_trajectory": "results\\stage-02-inverse\\surface-acceleration\\20261121_multi_radius\\validation.mat",
+  "physics_weight": [
+    0.001
+  ],
+  "neural_only": true,
+  "test_noise_um": 0,
+  "noise_seed": 179,
+  "height_filter_mm": 0.35
+}

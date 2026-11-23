@@ -1,0 +1,19 @@
+{
+  "output": "results\\stage-02-inverse\\surface-acceleration\\20261121_noise25",
+  "held_out": "eccentric",
+  "epochs": 90,
+  "device": "cuda",
+  "canonical_center": true,
+  "checkpoint_dir": "results\\stage-02-inverse\\surface-acceleration\\20261121_multi_radius_tuned",
+  "extra_test_dir": null,
+  "extra_test": [
+    "results\\stage-02-inverse\\surface-acceleration\\20261121_multi_radius\\new_shape.mat"
+  ],
+  "train_trajectory": [],
+  "validation_trajectory": null,
+  "physics_weight": [
+    0.03
+  ],
+  "neural_only": true,
+  "test_noise_um": 25.0
+}

@@ -1,0 +1,8 @@
+[
+  {
+    "weight": 0.0,
+    "train_s": 7.4256881000474095,
+    "validation_scaled_MAE": 0.005288513842970133,
+    "selected_epoch": 30
+  }
+]
