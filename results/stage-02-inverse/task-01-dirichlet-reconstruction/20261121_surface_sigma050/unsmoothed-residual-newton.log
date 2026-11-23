@@ -1,0 +1,40 @@
+  equilibrium 0.174 s, 0 iterations, residual 3.75e-14 N
+centered surface step 0, Fz 2.36333e-16 vs -0 N, IoU 1.000
+  equilibrium 2.238 s, 4 iterations, residual 6.66e-11 N
+centered surface step 1, Fz 0.0161683 vs 0.0160379 N, IoU 0.630
+  equilibrium 3.959 s, 8 iterations, residual 5.04e-14 N
+centered surface step 2, Fz 0.074652 vs 0.0746479 N, IoU 0.418
+  equilibrium 5.069 s, 10 iterations, residual 6.15e-13 N
+centered surface step 3, Fz 0.166428 vs 0.166509 N, IoU 0.640
+  equilibrium 6.309 s, 12 iterations, residual 9.6e-11 N
+centered surface step 4, Fz 0.279788 vs 0.280429 N, IoU 0.790
+  equilibrium 6.927 s, 14 iterations, residual 4e-12 N
+centered surface step 5, Fz 0.433623 vs 0.43368 N, IoU 0.753
+  equilibrium 7.710 s, 15 iterations, residual 2.52e-10 N
+centered surface step 6, Fz 0.598702 vs 0.600091 N, IoU 0.791
+  equilibrium 20.197 s, 38 iterations, residual 5.95e-11 N
+centered surface step 7, Fz 0.80734 vs 0.807156 N, IoU 0.943
+  equilibrium 23.708 s, 46 iterations, residual 1.31e-10 N
+centered surface step 8, Fz 1.03264 vs 1.03361 N, IoU 0.767
+  equilibrium 23.161 s, 46 iterations, residual 1.57e-10 N
+centered surface step 9, Fz 1.26987 vs 1.27571 N, IoU 0.823
+  equilibrium 31.355 s, 58 iterations, residual 2.99e-12 N
+centered surface step 10, Fz 1.53561 vs 1.54714 N, IoU 0.918
+  equilibrium 32.322 s, 62 iterations, residual 1.1e-11 N
+centered surface step 11, Fz 1.83027 vs 1.84432 N, IoU 0.924
+  equilibrium 26.813 s, 50 iterations, residual 4.27e-11 N
+centered surface step 12, Fz 2.13876 vs 2.15879 N, IoU 0.857
+  equilibrium 37.911 s, 86 iterations, residual 9.8e-13 N
+centered surface step 13, Fz 2.45785 vs 2.49108 N, IoU 0.863
+  equilibrium 57.705 s, 126 iterations, residual 1.24e-11 N
+centered surface step 14, Fz 2.79473 vs 2.84148 N, IoU 0.845
+{Error using assert
+Surface equilibrium stalled at height fraction 0.88557.
+
+Error in palm.inverse.surfaceEquilibrium (line 31)
+        assert(step>=1/1024,'Surface equilibrium stalled at height fraction %.6g.',next);
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in run_dirichlet_inverse (line 61)
+        [u,R,stats] = palm.inverse.surfaceEquilibrium(model,u,nodes(interiorTop), ...
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+} 

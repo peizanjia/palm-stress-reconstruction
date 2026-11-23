@@ -1,0 +1,81 @@
+Forward verification passed (relative tangent error 3.26e-11).
+  equilibrium 0.050 s, 0 iterations, residual 6.17e-15 N
+centered surface step 0, Fz -1.0044e-14 vs -0 N, IoU 1.000
+  equilibrium 1.669 s, 4 iterations, residual 1.16e-13 N
+centered surface step 1, Fz 0.0160828 vs 0.0160379 N, IoU 0.377
+  equilibrium 1.908 s, 5 iterations, residual 3.84e-11 N
+centered surface step 2, Fz 0.0743102 vs 0.0746479 N, IoU 0.309
+  equilibrium 2.295 s, 6 iterations, residual 2.74e-14 N
+centered surface step 3, Fz 0.165407 vs 0.166509 N, IoU 0.537
+  equilibrium 2.398 s, 6 iterations, residual 3.31e-13 N
+centered surface step 4, Fz 0.27757 vs 0.280429 N, IoU 0.486
+  equilibrium 2.274 s, 6 iterations, residual 1.87e-11 N
+centered surface step 5, Fz 0.429436 vs 0.43368 N, IoU 0.625
+  equilibrium 2.493 s, 6 iterations, residual 3.71e-10 N
+centered surface step 6, Fz 0.592045 vs 0.600091 N, IoU 0.613
+  equilibrium 2.815 s, 7 iterations, residual 3.18e-14 N
+centered surface step 7, Fz 0.797216 vs 0.807156 N, IoU 0.692
+  equilibrium 2.704 s, 7 iterations, residual 7.4e-14 N
+centered surface step 8, Fz 1.02003 vs 1.03361 N, IoU 0.627
+  equilibrium 2.962 s, 7 iterations, residual 6.99e-11 N
+centered surface step 9, Fz 1.2546 vs 1.27571 N, IoU 0.653
+  equilibrium 3.146 s, 8 iterations, residual 3.02e-14 N
+centered surface step 10, Fz 1.52011 vs 1.54714 N, IoU 0.696
+  equilibrium 3.744 s, 9 iterations, residual 3.43e-14 N
+centered surface step 11, Fz 1.81175 vs 1.84432 N, IoU 0.768
+  equilibrium 3.781 s, 10 iterations, residual 1.24e-12 N
+centered surface step 12, Fz 2.11678 vs 2.15879 N, IoU 0.783
+  equilibrium 4.328 s, 12 iterations, residual 1.77e-12 N
+centered surface step 13, Fz 2.4369 vs 2.49108 N, IoU 0.708
+  equilibrium 4.513 s, 13 iterations, residual 9.39e-14 N
+centered surface step 14, Fz 2.76996 vs 2.84148 N, IoU 0.714
+  equilibrium 5.116 s, 14 iterations, residual 5.33e-14 N
+centered surface step 15, Fz 3.11918 vs 3.2108 N, IoU 0.721
+  equilibrium 5.619 s, 16 iterations, residual 1.19e-11 N
+centered surface step 16, Fz 3.482 vs 3.59954 N, IoU 0.744
+  equilibrium 6.597 s, 18 iterations, residual 4.62e-13 N
+centered surface step 17, Fz 3.85907 vs 4.00828 N, IoU 0.717
+  equilibrium 7.544 s, 20 iterations, residual 2.21e-10 N
+centered surface step 18, Fz 4.2483 vs 4.43791 N, IoU 0.731
+  equilibrium 9.762 s, 24 iterations, residual 8.05e-10 N
+centered surface step 19, Fz 4.65245 vs 4.88989 N, IoU 0.755
+  equilibrium 0.032 s, 0 iterations, residual 4.27e-15 N
+eccentric surface step 0, Fz -8.19457e-15 vs -0 N, IoU 1.000
+  equilibrium 1.494 s, 4 iterations, residual 1.18e-13 N
+eccentric surface step 1, Fz 0.0161736 vs 0.0160391 N, IoU 0.377
+  equilibrium 1.839 s, 5 iterations, residual 3.84e-11 N
+eccentric surface step 2, Fz 0.074731 vs 0.0746587 N, IoU 0.309
+  equilibrium 2.236 s, 6 iterations, residual 2.95e-14 N
+eccentric surface step 3, Fz 0.166352 vs 0.166548 N, IoU 0.537
+  equilibrium 2.342 s, 6 iterations, residual 3.18e-13 N
+eccentric surface step 4, Fz 0.279187 vs 0.280513 N, IoU 0.486
+  equilibrium 2.209 s, 6 iterations, residual 1.75e-11 N
+eccentric surface step 5, Fz 0.431948 vs 0.43383 N, IoU 0.625
+  equilibrium 2.368 s, 6 iterations, residual 2.85e-10 N
+eccentric surface step 6, Fz 0.595595 vs 0.60033 N, IoU 0.610
+  equilibrium 2.767 s, 7 iterations, residual 3.44e-14 N
+eccentric surface step 7, Fz 0.802053 vs 0.807538 N, IoU 0.692
+  equilibrium 2.636 s, 7 iterations, residual 1e-13 N
+eccentric surface step 8, Fz 1.02627 vs 1.03412 N, IoU 0.623
+  equilibrium 2.883 s, 7 iterations, residual 7.5e-11 N
+eccentric surface step 9, Fz 1.26236 vs 1.27637 N, IoU 0.653
+  equilibrium 3.266 s, 8 iterations, residual 3.44e-14 N
+eccentric surface step 10, Fz 1.52977 vs 1.5481 N, IoU 0.696
+  equilibrium 3.565 s, 9 iterations, residual 3.76e-14 N
+eccentric surface step 11, Fz 1.82328 vs 1.84553 N, IoU 0.768
+  equilibrium 4.063 s, 10 iterations, residual 5.57e-14 N
+eccentric surface step 12, Fz 2.13032 vs 2.16028 N, IoU 0.785
+  equilibrium 4.811 s, 12 iterations, residual 1.85e-12 N
+eccentric surface step 13, Fz 2.45246 vs 2.49286 N, IoU 0.710
+  equilibrium 4.328 s, 12 iterations, residual 2.83e-10 N
+eccentric surface step 14, Fz 2.78768 vs 2.84358 N, IoU 0.714
+  equilibrium 5.206 s, 14 iterations, residual 5.65e-14 N
+eccentric surface step 15, Fz 3.13916 vs 3.21326 N, IoU 0.725
+  equilibrium 5.700 s, 16 iterations, residual 1.29e-13 N
+eccentric surface step 16, Fz 3.50427 vs 3.60238 N, IoU 0.744
+  equilibrium 6.248 s, 17 iterations, residual 2.02e-13 N
+eccentric surface step 17, Fz 3.88369 vs 4.0115 N, IoU 0.718
+  equilibrium 8.014 s, 22 iterations, residual 5.03e-14 N
+eccentric surface step 18, Fz 4.27513 vs 4.44152 N, IoU 0.730
+  equilibrium 9.216 s, 24 iterations, residual 7.78e-10 N
+eccentric surface step 19, Fz 4.68129 vs 4.89385 N, IoU 0.752
