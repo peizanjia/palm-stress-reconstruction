@@ -1,0 +1,23 @@
+{
+  "freeze_sha256": "2f1fd146ce069fbf76a09a339db3ddb0f478db08335481bd1f9f2aee189f73d1",
+  "blind_protocol": {
+    "regular_seed": 4847,
+    "combined_seed": 7351,
+    "regular_trajectories": 9,
+    "combined_trajectories": 6,
+    "regular_nonzero_steps": 7,
+    "combined_nonzero_steps": 9,
+    "deep_threshold_mm": 3.12,
+    "height_noise_um": 25,
+    "noise_seed": 7621,
+    "reference_residual_limit_N": 2.1e-08,
+    "geometry_case": "blind_combined_05",
+    "surface_inverse_smoothing_mm": 0.5
+  },
+  "device": "cpu",
+  "threads": 2,
+  "torch": "2.15.0+cpu",
+  "numpy": "2.3.5",
+  "evaluated_utc": "2026-11-23T10:35:08.133081+00:00",
+  "timing": "CPU/GPU single-frame inference including height preprocessing, after five warmups"
+}

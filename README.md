@@ -96,4 +96,4 @@ results/                  自动生成的工况输出
 
 不同压头形状、位置、姿态和深度的采样与整轨迹测试见[高度估力泛化](docs/stage-02-inverse/height-generalization.md)。
 
-仓库已归档 98 条多形状压入轨迹、扩样模型权重、逐帧测试结果和 [PINN 图件](results/stage-02-inverse/surface-generalization/20261122_email_figures/)。从 [续作指南](docs/HANDOFF.md) 可直接复测已训练模型或重新绘图；[交互记录](docs/agent-interactions/README.md) 收录了建模、反演和训练的技术讨论。
+仓库已归档多形状压入数据、CPU 重训并冻结的模型、15 条新盲测轨迹的逐帧预测，以及同批复合高度场上的全阶有限元反演和 [PINN 图件](results/stage-02-inverse/surface-generalization/20261122_email_figures/)。[续作指南](docs/HANDOFF.md) 提供复测和重绘命令。[交互记录](docs/agent-interactions/README.md) 收录了建模、反演和训练的讨论。

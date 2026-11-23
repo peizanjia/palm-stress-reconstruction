@@ -41,10 +41,10 @@ class Edge:
 CARDS = {
     "design": Card(59, 168, 238, 80, "设定压入工况", "形状 · 位置 · 姿态 · 行程"),
     "forward": Card(333, 168, 225, 80, "接触有限元正算", "圆柱硅胶 · 超弹性 · 无摩擦"),
-    "dataset": Card(603, 141, 257, 73, "保存高度图与反力", "98 条仿真轨迹", "#E7F4F3", "#96C3C1"),
-    "ball": Card(603, 241, 257, 68, "提取球头算例高度", "中心与偏心两个工况"),
+    "dataset": Card(603, 141, 257, 73, "保存开发高度与反力", "42 条训练 · 14 条验证", "#E7F4F3", "#96C3C1"),
+    "ball": Card(603, 241, 257, 68, "权重冻结后生成盲测", "9 条常规 · 6 条复合"),
     "inverse": Card(907, 241, 294, 68, "曲面约束有限元反演", "材料点可沿观测曲面移动"),
-    "femtime": Card(1246, 241, 235, 68, "约 4 s / 帧", "全阶反演平均求解时间", "#FEF2EA", "#DAB49D"),
+    "femtime": Card(1246, 241, 235, 68, "同帧对照", "同一高度输入与参考合力", "#FEF2EA", "#DAB49D"),
     "height": Card(59, 439, 180, 84, "输入高度场", "仿真顶面采样"),
     "cnn": Card(296, 399, 231, 67, "局部高度图 → CNN", "144 维图像特征"),
     "features": Card(296, 506, 231, 67, "计算形状统计", "深度 · 偏心 · 形状，共 13 维"),
@@ -86,11 +86,11 @@ BANDS = (
 )
 
 def labels(stats):
-    result = (f"仿真复合留出  ·  {stats['trajectories']} 条轨迹 / {stats['frames']} 帧"
-              f"  ·  MAE {stats['MAE_N']:.3f} N  ·  GPU 推理 P95 {stats['P95_ms']:.2f} ms")
+    result = (f"仿真复合盲测  ·  {stats['trajectories']} 条轨迹 / {stats['frames']} 帧"
+              f"  ·  MAE {stats['MAE_N']:.3f} N  ·  {stats['device_name']} 推理 P95 {stats['P95_ms']:.2f} ms")
     return (
         (53, 37, "从掌面高度到竖向接触力", 36, INK, True),
-        (55, 77, "TacPalm 启发的接触反演与毫秒级合力估计", 19, MUTED, False),
+        (55, 77, "TacPalm 启发的接触反演与合力估计", 19, MUTED, False),
         (624, 599, "完整对中高度场", 15, TEAL, False),
         (55, 849, result, 20, INK, True),
         (55, 882, "计时从高度图就绪开始。实物标定与闭环测试待开展。", 15, MUTED, False),

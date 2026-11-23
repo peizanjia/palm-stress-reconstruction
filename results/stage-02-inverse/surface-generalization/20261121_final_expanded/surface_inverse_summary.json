@@ -1,0 +1,6 @@
+{
+  "total_frames": 54,
+  "fem_solved_frames": 54,
+  "fem_inverse_MAE_N": 0.07427599152028587,
+  "pinn_MAE_on_same_frames_N": 0.024844282220223862
+}

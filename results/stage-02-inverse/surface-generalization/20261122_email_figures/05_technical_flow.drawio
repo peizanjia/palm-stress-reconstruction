@@ -29,16 +29,16 @@
         <mxCell id="forward" parent="1" vertex="1" value="&lt;b style=&quot;font-size:18px;&quot;&gt;接触有限元正算&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#4A6376;&quot;&gt;圆柱硅胶 · 超弹性 · 无摩擦&lt;/span&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#B5C8D5;fontFamily=Microsoft YaHei;fontColor=#183249;">
           <mxGeometry x="333" y="168" width="225" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="dataset" parent="1" vertex="1" value="&lt;b style=&quot;font-size:18px;&quot;&gt;保存高度图与反力&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#4A6376;&quot;&gt;98 条仿真轨迹&lt;/span&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E7F4F3;strokeColor=#96C3C1;fontFamily=Microsoft YaHei;fontColor=#183249;">
+        <mxCell id="dataset" parent="1" vertex="1" value="&lt;b style=&quot;font-size:18px;&quot;&gt;保存开发高度与反力&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#4A6376;&quot;&gt;42 条训练 · 14 条验证&lt;/span&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E7F4F3;strokeColor=#96C3C1;fontFamily=Microsoft YaHei;fontColor=#183249;">
           <mxGeometry x="603" y="141" width="257" height="73" as="geometry" />
         </mxCell>
-        <mxCell id="ball" parent="1" vertex="1" value="&lt;b style=&quot;font-size:18px;&quot;&gt;提取球头算例高度&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#4A6376;&quot;&gt;中心与偏心两个工况&lt;/span&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#B5C8D5;fontFamily=Microsoft YaHei;fontColor=#183249;">
+        <mxCell id="ball" parent="1" vertex="1" value="&lt;b style=&quot;font-size:18px;&quot;&gt;权重冻结后生成盲测&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#4A6376;&quot;&gt;9 条常规 · 6 条复合&lt;/span&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#B5C8D5;fontFamily=Microsoft YaHei;fontColor=#183249;">
           <mxGeometry x="603" y="241" width="257" height="68" as="geometry" />
         </mxCell>
         <mxCell id="inverse" parent="1" vertex="1" value="&lt;b style=&quot;font-size:18px;&quot;&gt;曲面约束有限元反演&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#4A6376;&quot;&gt;材料点可沿观测曲面移动&lt;/span&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#B5C8D5;fontFamily=Microsoft YaHei;fontColor=#183249;">
           <mxGeometry x="907" y="241" width="294" height="68" as="geometry" />
         </mxCell>
-        <mxCell id="femtime" parent="1" vertex="1" value="&lt;b style=&quot;font-size:18px;&quot;&gt;约 4 s / 帧&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#4A6376;&quot;&gt;全阶反演平均求解时间&lt;/span&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FEF2EA;strokeColor=#DAB49D;fontFamily=Microsoft YaHei;fontColor=#183249;">
+        <mxCell id="femtime" parent="1" vertex="1" value="&lt;b style=&quot;font-size:18px;&quot;&gt;同帧对照&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#4A6376;&quot;&gt;同一高度输入与参考合力&lt;/span&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FEF2EA;strokeColor=#DAB49D;fontFamily=Microsoft YaHei;fontColor=#183249;">
           <mxGeometry x="1246" y="241" width="235" height="68" as="geometry" />
         </mxCell>
         <mxCell id="height" parent="1" vertex="1" value="&lt;b style=&quot;font-size:18px;&quot;&gt;输入高度场&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:13px;color:#4A6376;&quot;&gt;仿真顶面采样&lt;/span&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#B5C8D5;fontFamily=Microsoft YaHei;fontColor=#183249;">
@@ -175,13 +175,13 @@
         <mxCell id="caption0" parent="1" vertex="1" value="从掌面高度到竖向接触力" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacing=0;fontFamily=Microsoft YaHei;fontSize=36;fontColor=#183249;fontStyle=1;">
           <mxGeometry x="53" y="15.0" width="1463" height="44" as="geometry" />
         </mxCell>
-        <mxCell id="caption1" parent="1" vertex="1" value="TacPalm 启发的接触反演与毫秒级合力估计" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacing=0;fontFamily=Microsoft YaHei;fontSize=19;fontColor=#4A6376;fontStyle=0;">
+        <mxCell id="caption1" parent="1" vertex="1" value="TacPalm 启发的接触反演与合力估计" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacing=0;fontFamily=Microsoft YaHei;fontSize=19;fontColor=#4A6376;fontStyle=0;">
           <mxGeometry x="55" y="63.5" width="1461" height="27" as="geometry" />
         </mxCell>
         <mxCell id="caption2" parent="1" vertex="1" value="完整对中高度场" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacing=0;fontFamily=Microsoft YaHei;fontSize=15;fontColor=#087F83;fontStyle=0;">
           <mxGeometry x="624" y="587.5" width="892" height="23" as="geometry" />
         </mxCell>
-        <mxCell id="caption3" parent="1" vertex="1" value="仿真复合留出  ·  6 条轨迹 / 54 帧  ·  MAE 0.019 N  ·  GPU 推理 P95 4.14 ms" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacing=0;fontFamily=Microsoft YaHei;fontSize=20;fontColor=#183249;fontStyle=1;">
+        <mxCell id="caption3" parent="1" vertex="1" value="仿真复合盲测  ·  6 条轨迹 / 54 帧  ·  MAE 0.025 N  ·  CPU 推理 P95 5.76 ms" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacing=0;fontFamily=Microsoft YaHei;fontSize=20;fontColor=#183249;fontStyle=1;">
           <mxGeometry x="55" y="835.0" width="1461" height="28" as="geometry" />
         </mxCell>
         <mxCell id="caption4" parent="1" vertex="1" value="计时从高度图就绪开始。实物标定与闭环测试待开展。" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacing=0;fontFamily=Microsoft YaHei;fontSize=15;fontColor=#4A6376;fontStyle=0;">

@@ -1,0 +1,15 @@
+{
+  "ridge": {
+    "development_scaled_mae": 0.009639242730801157
+  },
+  "image": {
+    "development_scaled_mae": 0.032868076115846634,
+    "epoch": 32,
+    "seconds": 144.14817509899967
+  },
+  "pinn": {
+    "development_scaled_mae": 0.005432693753391504,
+    "epoch": 110,
+    "seconds": 1470.2235376360004
+  }
+}

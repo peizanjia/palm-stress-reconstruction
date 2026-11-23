@@ -1,6 +1,7 @@
 """Reproduce the TacPalm contact-force figures from archived FEM and PINN data."""
 
 import argparse
+import csv
 from dataclasses import dataclass
 import json
 from pathlib import Path
@@ -11,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.tri as mtri
 from matplotlib.collections import PolyCollection
 from matplotlib.colors import LinearSegmentedColormap, Normalize
+from matplotlib.font_manager import fontManager
 from matplotlib.lines import Line2D
 from matplotlib.patches import FancyBboxPatch, Polygon
 import numpy as np
@@ -19,28 +21,30 @@ from scipy.spatial import ConvexHull
 import torch
 
 from pinn_flow_diagram import export_drawio, render_flow
-from train_generalization import Decoder, Network, Observations
+from train_generalization import Decoder, Network, Observations, sha256
 from train_surface_surrogate import MESH, ROOT
 
 
-INVERSE = ROOT/"results/stage-02-inverse/task-01-dirichlet-reconstruction"
 ARCHIVE = ROOT/"results/stage-02-inverse/surface-generalization"
 DEFAULT = ARCHIVE/"20261122_email_figures"
-CASE = "combined_05"
 INK = "#17324A"
 MUTED = "#506C80"
-FEM = "#215B88"
-PINN = "#BD592D"
+FEM = "#2A78D6"
+PINN = "#EB6834"
+IMAGE = "#1BAF7A"
 TEAL = "#117E80"
 GRID = "#DCE6E9"
 PALE = "#F1F6F8"
-FONT = "Microsoft YaHei"
+installed_fonts = {font.name for font in fontManager.ttflist}
+FONT = next((name for name in ("Noto Sans CJK SC", "Microsoft YaHei", "Noto Sans CJK JP",
+                              "AR PL UKai CN")
+             if name in installed_fonts), "DejaVu Sans")
 DEPTH_CMAP = LinearSegmentedColormap.from_list("indentation", [
     "#EBF4F4", "#BCD9DA", "#67A9A9", "#3C818C", "#235470", "#173450"
 ])
 
 plt.rcParams.update({
-    "font.family": [FONT, "Noto Sans SC", "Noto Sans CJK SC", "DejaVu Sans"],
+    "font.family": [FONT, "DejaVu Sans"],
     "font.size": 10,
     "axes.unicode_minus": False,
     "mathtext.fontset": "stix",
@@ -108,16 +112,16 @@ def case_rows(table, case):
     return rows[np.argsort(rows["Travel_mm"])]
 
 
-def load_geometry(dest, final_sample, final_fit, device):
+def load_geometry(dest, final_sample, final_fit, checkpoint, device):
+    case = final_sample.stem
     source = dest/"source_data"
-    fem = loadmat(source/f"{CASE}_fem.mat", simplify_cells=True)
+    fem = loadmat(source/f"{case}_fem.mat", simplify_cells=True)
     sample = loadmat(final_sample, simplify_cells=True, variable_names=["heights", "axis", "spec"])
     height = sample["heights"][:, :, -1]
     ref = Mesh(fem["reference"], fem["deformed"], fem["top"]-1)
     decoder = Decoder(device)
     network = Network(28).to(device).eval()
-    network.load_state_dict(torch.load(ARCHIVE/"20261121_expanded_training/pinn.pt",
-                                       map_location=device, weights_only=True))
+    network.load_state_dict(torch.load(checkpoint, map_location=device, weights_only=True))
     observations = Observations(device)
     raw = np.where(np.isfinite(height), fem["height_mm"]-height, 0)
     with torch.inference_mode():
@@ -138,10 +142,10 @@ def load_geometry(dest, final_sample, final_fit, device):
         raise ValueError(f"Model reconstruction did not match the held-out predictions: {differences}")
     if not np.isclose(fem["travel_mm"], final_fit["Travel_mm"], atol=1e-9, rtol=0):
         raise ValueError("The FEM geometry and PINN record must use the same travel step.")
-    np.savez_compressed(source/f"{CASE}_pinn.npz", reference=pin.reference,
+    np.savez_compressed(source/f"{case}_pinn.npz", reference=pin.reference,
                         current=pin.current, top=pin.top, force_N=force, min_j=min_j.item())
     (source/"geometry_check.json").write_text(
-        json.dumps({"case": CASE, "travel_mm": fem["travel_mm"], "fem_N": fem["force_N"],
+        json.dumps({"case": case, "travel_mm": fem["travel_mm"], "fem_N": fem["force_N"],
                     "pinn_N": force, **differences}, indent=2), encoding="utf-8")
     return fem, sample, ref, pin, force
 
@@ -238,7 +242,7 @@ def model_figure(dest, fem, sample, ref, pin, predicted):
     d = fem["travel_mm"]
     spec = fem["spec"]
     center = spec["center_mm"]
-    subtitle = (f"复合留出工况 {CASE}  ·  偏心 {np.linalg.norm(center):.2f} mm"
+    subtitle = (f"复合盲测工况 {spec['id']}  ·  偏心 {np.linalg.norm(center):.2f} mm"
                 f"  ·  转角 {spec['yaw_deg']:.1f}°  ·  倾角 {spec['tilt_deg']:.1f}°"
                 f"  ·  末步行程 {d:.2f} mm")
     fig = build_figure((15.7, 6.5), "压入后的三维结构与竖向合力", subtitle)
@@ -293,7 +297,7 @@ def section(ax, mesh, anchor, force, color):
 
 def section_figure(dest, fem, ref, pin, predicted):
     fig = build_figure((12.6, 6.6), "压痕下方的硅胶变形剖面",
-                       f"同一复合留出工况 {CASE}  ·  末步行程 {fem['travel_mm']:.2f} mm")
+                       f"同一复合盲测工况 {fem['spec']['id']}  ·  末步行程 {fem['travel_mm']:.2f} mm")
     gs = fig.add_gridspec(1, 2, left=.07, right=.965, bottom=.17, top=.75, wspace=.20)
     a, b = (fig.add_subplot(gs[0, i]) for i in range(2))
     section(a, ref, fem["spec"]["center_mm"], fem["force_N"], FEM)
@@ -321,11 +325,11 @@ def curve_legend(fig, y, x=.96):
 
 def load_figure(dest, combined, cases):
     fig = build_figure((13.0, 8.0), "不同压入工况的非线性载荷–行程响应",
-                       "六条复合留出轨迹  ·  压头形状、偏心、姿态与行程同时变化")
+                       "六条复合盲测轨迹  ·  压头形状、偏心、姿态与行程同时变化")
     curve_legend(fig, .866)
     gs = fig.add_gridspec(2, 3, left=.08, right=.965, bottom=.14, top=.77,
                           wspace=.23, hspace=.43)
-    limit = np.ceil(combined["Reference_N"].max()+0.22)
+    limit = np.ceil(max(combined["Reference_N"].max(), combined["Estimate_N"].max())+0.22)
     for i, (key, spec) in enumerate(cases.items()):
         row, col = divmod(i, 3)
         ax = fig.add_subplot(gs[row, col])
@@ -334,7 +338,7 @@ def load_figure(dest, combined, cases):
         data_curve(ax, rows)
         ax.set(xlim=(-.02, 3.56), ylim=(-.03, limit), xticks=[0, 1, 2, 3],
                yticks=np.arange(0, limit+.1, 2))
-        title(ax, key.replace("combined_", "工况 "), 10.2)
+        title(ax, f"工况 {key[-2:]}", 10.2)
         error = 100*(rows["Estimate_N"][-1]/rows["Reference_N"][-1]-1)
         ax.text(.054, .93, f"偏心 {np.linalg.norm(spec['center_mm']):.1f} mm"
                 f"  ·  倾角 {spec['tilt_deg']:.0f}°\n末步误差 {error:+.2f}%",
@@ -347,85 +351,119 @@ def load_figure(dest, combined, cases):
     save(fig, dest, "03_load_travel")
 
 
-def accuracy_figure(dest, combined, regular, statistics):
-    fig = build_figure((13.7, 6.9), "留出轨迹上的合力预测精度",
-                       "以有限元正算为参考  ·  扩样及噪声增强版能量 PINN")
-    gs = fig.add_gridspec(1, 2, width_ratios=[1, 1.18], left=.075, right=.96,
-                          bottom=.15, top=.75, wspace=.34)
+def accuracy_figure(dest, combined, regular, report):
+    fig = build_figure((14.2, 6.9), "盲测轨迹上的合力预测精度",
+                       "以有限元正算为参考  ·  三种方法使用相同的高度帧和训练、开发轨迹")
+    gs = fig.add_gridspec(1, 2, width_ratios=[1, 1.30], left=.075, right=.96,
+                          bottom=.15, top=.74, wspace=.42)
     a, b = (fig.add_subplot(gs[0, i]) for i in range(2))
     chart_style(a, xgrid=True)
-    lim = np.ceil(max(combined["Reference_N"].max(), combined["Estimate_N"].max()))
+    lim = np.ceil(max(max(t["Reference_N"].max(), t["Estimate_N"].max())
+                      for t in (combined, regular)))
     a.plot([0, lim], [0, lim], ls="--", color="#6F8490", lw=1.25, label="完全一致")
     for table, label, color, marker in (
-        (regular, "常规联合留出 · 63 帧", TEAL, "o"),
-        (combined, "多因素同时外推 · 54 帧", PINN, "D"),
+        (regular, "常规盲测", FEM, "o"),
+        (combined, "复合盲测", PINN, "D"),
     ):
         a.scatter(table["Reference_N"], table["Estimate_N"], c=color, marker=marker,
-                  alpha=.85, s=29, edgecolor="white", lw=.35, label=label, zorder=3)
+                  alpha=.85, s=29, edgecolor="white", lw=.35, label=f"{label} · {len(table)} 帧", zorder=3)
     a.set(xlim=(0, lim), ylim=(0, lim), aspect="equal", xlabel="有限元参考合力 (N)",
           ylabel="PINN 预测合力 (N)")
     a.legend(loc="upper left", frameon=False, fontsize=8.6)
-    title(a, "逐帧参考值与预测值")
+    title(a, "PINN 逐帧参考值与预测值")
 
     groups = (
-        ("test", "常规联合留出"), ("shape", "未见形状"), ("position", "更远偏心"),
-        ("yaw", "留出平面转角"), ("tilt", "更高倾角"), ("combined", "多因素同时外推"),
-        ("combined_beyond_3p12", "复合外推 >3.12 mm"), ("combined_noise25", "复合外推 +25 µm 噪声"),
+        ("test", "常规"), ("test_noise25", "常规 + 25 µm"),
+        ("combined", "复合外推"), ("combined_noise25", "复合 + 25 µm"),
+        ("combined_beyond_3p12", "复合 > 3.12 mm"),
     )
-    errors = [statistics[key]["MAE_N"] for key, _ in groups]
+    methods = (("ridge", "核岭", FEM, "o"), ("pinn", "PINN", PINN, "D"),
+               ("image", "纯图像", IMAGE, "s"))
     indices = np.arange(len(groups))
-    colors = [PINN if error>.05 else TEAL for error in errors]
     chart_style(b)
     b.grid(axis="y", visible=False)
     b.grid(axis="x", color=GRID, lw=.7)
     b.spines["left"].set_visible(False)
     b.tick_params(axis="y", length=0)
-    b.barh(indices, errors, color=colors, height=.63)
-    b.axvline(.05, color="#825945", ls="--", lw=1.3)
-    for y, error in zip(indices, errors):
-        b.text(error+.0014, y, f"{error:.3f}", ha="left", va="center",
-               color=INK, fontsize=9)
-    b.set(yticks=indices, yticklabels=[label for _, label in groups], xlim=(0, .079),
-          ylim=(len(groups)-.53, -.72), xlabel="平均绝对误差 MAE (N)")
-    b.set_xticks([0, .02, .04, .06])
-    b.text(.05, -.58, "0.05 N 目标", ha="center", va="bottom", fontsize=8.2,
-           color="#825945", bbox=dict(facecolor="white", edgecolor="none", pad=.4))
-    title(b, "不同留出条件下的合力误差")
-    note(fig, "深压入子集含 6 帧。加噪组为同 54 帧复合工况加入标准差 25 µm 的合成高度噪声。")
+    b.axvline(.05, color="#825945", ls="--", lw=1.2, label="0.05 N 目标")
+    for offset, (method, label, color, marker) in zip((-.21, 0, .21), methods):
+        values = [report[method][key]["MAE_N"] for key, _ in groups]
+        b.scatter(values, indices+offset, color=color, marker=marker, s=48,
+                  edgecolor=INK, linewidth=.55, label=label, zorder=3)
+    b.set(yticks=indices, yticklabels=[label for _, label in groups],
+          ylim=(len(groups)-.54, -.55), xlabel="平均绝对误差 MAE (N)", xlim=(0, None))
+    b.legend(loc="lower left", bbox_to_anchor=(0, 1.03), frameon=False,
+             ncol=4, fontsize=8.6, columnspacing=1.2, handletextpad=.25, borderaxespad=0)
+    b.set_title("各方法在同批盲测高度上的误差", loc="left", y=1.13,
+                color=INK, weight="bold", fontsize=11.5)
+    note(fig, "25 µm 为合成高度噪声标准差，三种方法共享同一噪声实现。深压子集由预先设定的行程阈值选取。")
     save(fig, dest, "04_generalization")
 
 
-def inverse_figure(dest):
-    fig = build_figure((12.5, 6.25), "曲面约束改善高度反演的合力估计",
-                       "中心和偏心球头算例  ·  全阶有限元反演  ·  与 PINN 泛化试验分别计时")
-    gs = fig.add_gridspec(1, 2, left=.08, right=.965, bottom=.18, top=.75, wspace=.22)
-    for i, (case, label) in enumerate((("centered", "中心球头"), ("eccentric", "偏心球头"))):
-        ax = fig.add_subplot(gs[i])
-        base = read_table(INVERSE/f"20261120_inverse_v1/{case}/height/metrics.csv")
-        corrected = read_table(INVERSE/f"20261121_surface_sigma050/{case}/surface/metrics.csv")
-        np.testing.assert_allclose(base["Travel_mm"], corrected["Travel_mm"], atol=1e-12)
-        np.testing.assert_allclose(base["RefFz_N"], corrected["RefFz_N"], atol=1e-10)
-        ref = -corrected["RefFz_N"]
-        before = 100*(base["Fz_N"][-1]/corrected["RefFz_N"][-1]-1)
-        after = 100*(corrected["Fz_N"][-1]/corrected["RefFz_N"][-1]-1)
+def load_inverse_comparison(directory, combined, case_ids):
+    rows = []
+    for key in case_ids:
+        with (directory/f"{key}.csv").open(newline="", encoding="utf-8-sig") as stream:
+            rows.extend(csv.DictReader(stream))
+    keys = [(row["Trajectory"], float(row["Travel_mm"])) for row in rows]
+    assert len(keys) == len(combined) and len(set(keys)) == len(keys)
+    inverse = np.array([float(row["Estimate_N"]) for row in rows])
+    valid = np.array([row["Status"] == "ok" for row in rows])
+    residual = np.array([float(row["Residual_N"]) for row in rows])
+    minimum_j = np.array([float(row["MinJ"]) for row in rows])
+    if not np.all(np.isfinite(inverse[valid]) & (residual[valid] < 2e-9) & (minimum_j[valid] > 0)):
+        raise ValueError("A reported successful surface inverse fails the equilibrium checks.")
+    inverse[~valid] = np.nan
+    np.testing.assert_array_equal([key[0] for key in keys], combined["Trajectory"])
+    np.testing.assert_allclose([key[1] for key in keys], combined["Travel_mm"], atol=1e-12, rtol=0)
+    reference = combined["Reference_N"]
+    np.testing.assert_allclose([float(row["Reference_N"]) for row in rows], reference, atol=1e-6, rtol=0)
+    paired = {
+        "total_frames": len(valid),
+        "fem_solved_frames": int(valid.sum()),
+        "fem_inverse_MAE_N": float(np.mean(abs(inverse[valid]-reference[valid]))) if valid.any() else None,
+        "pinn_MAE_on_same_frames_N": float(np.mean(abs(combined["Estimate_N"][valid]-reference[valid])))
+        if valid.any() else None,
+    }
+    return inverse, valid, paired
+
+
+def inverse_figure(dest, combined, cases, inverse, valid, paired):
+    fig = build_figure((13.4, 8.05), "同批盲测高度上的有限元反演与 PINN",
+                       "六条复合轨迹  ·  各估力方法使用同一帧的高度图  ·  以有限元接触正算为参考")
+    gs = fig.add_gridspec(2, 3, left=.077, right=.97, bottom=.16, top=.76,
+                          wspace=.24, hspace=.47)
+    limit = np.ceil(max(np.max(combined["Reference_N"]), np.max(combined["Estimate_N"]),
+                        np.max(inverse[valid], initial=0))+.10)
+    for i, key in enumerate(cases):
+        row, col = divmod(i, 3)
+        ax = fig.add_subplot(gs[row, col])
         chart_style(ax)
-        ax.plot(corrected["Travel_mm"], ref, color=FEM, lw=2.0, label="有限元正算")
-        ax.plot(base["Travel_mm"], -base["Fz_N"], color=PINN, ls="--", lw=1.8,
-                label="冻结水平位移")
-        ax.plot(corrected["Travel_mm"], -corrected["Fz_N"], color=TEAL, lw=1.6, marker="o",
-                ms=3.3, mfc="white", markevery=2, label="曲面约束反演")
-        ax.set(xlim=(-.025, 3.81), ylim=(-.05, 7.15), xlabel="压头行程 (mm)", ylabel="向下合力 (N)")
-        title(ax, label)
-        ax.legend(loc="upper left", frameon=False, fontsize=9)
-        ax.text(.99, .115, f"末步力误差  {before:+.1f}% → {after:+.1f}%\n"
-                f"曲面反演平均  {corrected['Solve_s'][1:].mean():.2f} s / 帧",
-                transform=ax.transAxes, ha="right", va="center", fontsize=9, color=MUTED,
-                linespacing=1.5)
-    note(fig, "曲面反演允许顶面切向位移并采用 0.50 mm 高度平滑。此图比较竖向合力。")
+        selected = combined["Trajectory"] == key
+        force = combined[selected]
+        data_curve(ax, force)
+        ax.plot(force["Travel_mm"], inverse[selected], color=IMAGE, ls="--", lw=1.6,
+                marker="s", ms=3.2, markeredgecolor=INK, markeredgewidth=.45)
+        ax.set(xlim=(-.02, 3.56), ylim=(-.03, limit), xticks=[0, 1, 2, 3])
+        title(ax, f"工况 {key[-2:]}", 10.2)
+        if row == 1:
+            ax.set_xlabel("压头行程 (mm)")
+        if col == 0:
+            ax.set_ylabel("向下合力 (N)")
+    fig.legend(handles=[
+        Line2D([0], [0], color=FEM, lw=2, label="有限元正算参考"),
+        Line2D([0], [0], color=PINN, marker="o", mfc="white", ls="", label="PINN 估计"),
+        Line2D([0], [0], color=IMAGE, marker="s", ls="--", label="全阶曲面约束反演"),
+    ], bbox_to_anchor=(.97, .847), loc="upper right", ncol=3, frameon=False, fontsize=9.5)
+    description = f"有限元反演收敛 {paired['fem_solved_frames']}/{paired['total_frames']} 帧"
+    if valid.any():
+        description += (f"。相同收敛帧的 MAE  ·  全阶反演 {paired['fem_inverse_MAE_N']:.4f} N"
+                        f"  ·  PINN {paired['pinn_MAE_on_same_frames_N']:.4f} N")
+    note(fig, description)
     save(fig, dest, "06_fem_inverse_check")
 
 
-def overview(dest, fem, ref, combined, statistics):
+def overview(dest, fem, ref, combined, statistics, device_name):
     fig = build_figure((13.3, 7.8), "由掌面高度估计接触合力",
                        "TacPalm 启发的球头与多形状压入仿真  ·  曲面约束有限元反演与能量 PINN")
     gs = fig.add_gridspec(1, 2, width_ratios=[1.09, 1], left=.052, right=.95,
@@ -434,13 +472,16 @@ def overview(dest, fem, ref, combined, statistics):
     disk(a, ref, fem["spec"]["center_mm"], fem["force_N"], FEM,
          Normalize(0, 3.4, clip=True), fem)
     a.set_title("有限元压入及竖向合力", fontsize=12.5, weight="bold", pad=9)
-    a.text(.50, -.02, f"{CASE}  ·  行程 {fem['travel_mm']:.2f} mm  ·  三维图竖向比例放大 1.7 倍",
+    case = fem["spec"]["id"]
+    a.text(.50, -.02, f"{case}  ·  行程 {fem['travel_mm']:.2f} mm  ·  三维图竖向比例放大 1.7 倍",
            ha="center", va="top", color=MUTED, fontsize=8.5, transform=a.transAxes)
     chart_style(b)
     title(b, "典型留出工况的载荷–行程曲线", 12.5)
-    data_curve(b, case_rows(combined, "combined_01"), FEM, FEM, "o")
-    data_curve(b, case_rows(combined, CASE), PINN, PINN, "s")
-    b.set(xlim=(-.04, 3.59), ylim=(-.1, 7.2), xlabel="压头行程 (mm)", ylabel="向下合力 (N)")
+    first, chosen = (case_rows(combined, key) for key in ("blind_combined_01", case))
+    data_curve(b, first, FEM, FEM, "o")
+    data_curve(b, chosen, PINN, PINN, "s")
+    load_limit = max(max(rows["Estimate_N"].max(), rows["Reference_N"].max()) for rows in (first, chosen))
+    b.set(xlim=(-.04, 3.59), ylim=(-.1, np.ceil(load_limit+.15)), xlabel="压头行程 (mm)", ylabel="向下合力 (N)")
     b.legend(handles=[
         Line2D([0], [0], color=FEM, lw=2, label="工况 01"),
         Line2D([0], [0], color=PINN, lw=2, label="工况 05"),
@@ -452,14 +493,14 @@ def overview(dest, fem, ref, combined, statistics):
                          facecolor=PALE, edgecolor="none", zorder=0)
     fig.add_artist(box)
     s = statistics["combined"]
-    metrics = [(f'{s["MAE_N"]:.3f} N', "54 帧复合留出 · 合力 MAE"),
+    metrics = [(f'{s["MAE_N"]:.3f} N', f'{s["frames"]} 帧复合盲测 · 合力 MAE'),
                (f'{s["MaxFinalAPE_pct"]:.2f}%', "最差轨迹末步相对力误差"),
-               (f'{s["P95_ms"]:.2f} ms', "GPU 单帧推理 P95")]
+               (f'{s["P95_ms"]:.2f} ms', f"{device_name} 单帧推理 P95")]
     for i, (value, caption) in enumerate(metrics):
         x = [.075, .385, .698][i]
         fig.text(x, .177, value, color=TEAL, weight="bold", fontsize=23, va="center")
         fig.text(x, .125, caption, color=MUTED, fontsize=9.4, va="center")
-    note(fig, "实线为有限元正算。精度对照采用合成数据，GPU 计时从高度图就绪开始。")
+    note(fig, "实线为有限元正算。精度对照采用合成数据，计时从高度图就绪开始。")
     save(fig, dest, "00_email_overview")
 
 
@@ -467,31 +508,47 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=DEFAULT)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
+    parser.add_argument("--evaluation", type=Path, default=ARCHIVE/"20261121_final_expanded")
+    parser.add_argument("--checkpoint", type=Path, default=ARCHIVE/"20261121_expanded_training")
+    parser.add_argument("--samples", type=Path, default=ARCHIVE/"20261123_blind_combined")
     args = parser.parse_args()
     dest = args.output.resolve()
     dest.mkdir(parents=True, exist_ok=True)
     torch.set_num_threads(2)
-    path = ARCHIVE/"20261121_final_expanded"
+    path = args.evaluation
+    evaluation = json.loads((path/"evaluation.json").read_text(encoding="utf-8"))
+    lock = args.checkpoint/"freeze.json"
+    if sha256(lock) != evaluation["freeze_sha256"]:
+        raise ValueError("Figures require the same frozen model as the blind evaluation.")
+    checkpoint = args.checkpoint/"pinn.pt"
+    if sha256(checkpoint) != json.loads(lock.read_text(encoding="utf-8"))["checkpoints"]["pinn.pt"]:
+        raise ValueError("PINN checkpoint changed after training.")
     combined = read_table(path/"pinn_combined.csv")
-    statistics = json.loads((path/"summary.json").read_text(encoding="utf-8"))["pinn"]
+    report = json.loads((path/"summary.json").read_text(encoding="utf-8"))
+    statistics = report["pinn"]
     regular = read_table(path/"pinn_test.csv")
     if not np.isclose(np.mean(abs(combined["Estimate_N"]-combined["Reference_N"])),
                       statistics["combined"]["MAE_N"], atol=2e-7, rtol=0):
         raise ValueError("The combined table and summary disagree.")
-    samples = ARCHIVE/"20261121_combined"
+    samples = args.samples
     cases = {key: loadmat(samples/f"{key}.mat", simplify_cells=True,
                           variable_names=["spec"])["spec"] for key in sorted(set(combined["Trajectory"]))}
-    final_fit = case_rows(combined, CASE)[-1]
-    fem, sample, ref, pin, force = load_geometry(dest, samples/f"{CASE}.mat", final_fit,
-                                                 torch.device(args.device))
-    overview(dest, fem, ref, combined, statistics)
+    case = evaluation["blind_protocol"]["geometry_case"]
+    final_fit = case_rows(combined, case)[-1]
+    fem, sample, ref, pin, force = load_geometry(dest, samples/f"{case}.mat", final_fit,
+                                                 checkpoint, torch.device(args.device))
+    inverse, valid, paired = load_inverse_comparison(path/"surface_inverse", combined, cases)
+    (path/"surface_inverse_summary.json").write_text(json.dumps(paired, indent=2)+"\n", encoding="utf-8")
+    device_name = "CPU" if evaluation["device"] == "cpu" else "GPU"
+    overview(dest, fem, ref, combined, statistics, device_name)
     model_figure(dest, fem, sample, ref, pin, force)
     section_figure(dest, fem, ref, pin, force)
     load_figure(dest, combined, cases)
-    accuracy_figure(dest, combined, regular, statistics)
-    inverse_figure(dest)
-    render_flow(dest, statistics["combined"])
-    export_drawio(dest, statistics["combined"])
+    accuracy_figure(dest, combined, regular, report)
+    inverse_figure(dest, combined, cases, inverse, valid, paired)
+    flow_stats = {**statistics["combined"], "device_name": device_name}
+    render_flow(dest, flow_stats)
+    export_drawio(dest, flow_stats)
     print(f"Wrote figures to {dest}")
 
 

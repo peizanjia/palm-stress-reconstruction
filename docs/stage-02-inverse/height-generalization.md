@@ -1,93 +1,68 @@
-# 高度估力的几何与工况泛化
+# 掌面高度估力的仿真盲测
 
-输入为圆片当前坐标上的高度图，输出为向下合力。训练及部署均不输入压头类型、尺寸、位置、转角、倾角或机械行程。圆片、固定侧缘和底面以及可压缩 Neo-Hookean 参数沿用既有设置。所有测试按压头轨迹划分。
+圆片半径 25 mm、厚 5 mm，底面和侧面固定。材料为可压缩 Neo-Hookean，剪切模量 30 kPa、泊松比 0.45。有限元接触正算生成当前坐标上的高度图和竖向反力。各估力方法从高度图得到竖向合力，压头几何、位姿、参考反力和实际行程用于离线构造工况与对齐评分。
 
-## 参考数据设计
+## 数据划分和冻结
 
-用经过平面转角与刚体倾角变换的凸超椭球描述压头。指数 2 的等轴模型为球，指数 2 的不等轴模型为椭球，指数 4 为圆角方形凸体。指数 3 的不等轴压头整族留出。每次施加行程前，将压头真实最低点定位到指定的初始接触点。基于隐式间隙的罚势给出法向牵引及一致切线。
+| 集合 | 轨迹 | 非零高度帧 | 用途 |
+| --- | ---: | ---: | --- |
+| 训练 | 42 | 318 | 拟合权重 |
+| 开发 | 14 | 110 | 选择神经模型检查点和核岭超参数 |
+| 常规盲测 | 9 | 63 | 新采样的球头、椭球和指数 4 圆角压头，沿用常规工况范围 |
+| 复合外推盲测 | 6 | 54 | 指数 3 压头，偏心 8–10 mm、转角 60°–100°、倾角 23°–32°、最大行程 3.12–3.47 mm |
 
-| 组别 | 计划 | 变化范围 |
-| --- | ---: | --- |
-| 训练候选、开发候选、联合测试 | 36、9、9 条 | 三种形状，长半轴 3.4–5.1 mm，偏心 0–6 mm，平面角 0°–180°，倾角 0°–18°，最大行程 2.40–2.70 mm |
-| 平面角留出 | 来自训练和开发候选 | 将非球形候选中平面角 60°–100° 的整条轨迹移入该组 |
-| 新形状 | 4 条 | 指数 3 的不等轴凸体，其他变量沿用名义区间 |
-| 更远位置 | 4 条 | 偏心 8–10 mm |
-| 更高倾角 | 4 条 | 倾角 23°–32° 的不等轴凸体 |
-| 更深压入 | 4 条 | 加载到 3.12–3.47 mm，单独评分超过训练行程上界 2.70 mm 的帧 |
-| 细网格复核 | 4 条 | 各挑战组首条轨迹重算，接触区间距由 0.83 mm 降为 0.53 mm |
+上一轮扩样是在查看旧复合留出误差后决定的。旧常规、复合及单因素测试均归入探索记录。新实验保留已经确定的训练区间和训练设置，先在 CPU 上重训并冻结，再生成新的最终工况。两套盲测均用预先登记的种子独立分层采样。默认展示复合第 05 条末步，选择在测试之前写入配置。
 
-随机种子 826 固定。连续变量做分层采样。每条含零载和浅、中、深的 7 个非零步骤，深压组含额外步骤。每个样本记录行程、反力、最小体积比、自由自由度残差、罚穿透和停止原因。高度以 0.25 mm 间距采样。细网格复核保留相同罚系数因子，因此同时反映离散和罚刚度的变化。结果是给定硅胶本构的合成参考。
+盲测入口核对冻结时的评估代码、正算及反演实现、参考网格、协议和三个模型权重的 SHA-256。MATLAB 样本记录对应的冻结指纹。训练只载入训练与开发轨迹的高度和标签。最终评估逐轨迹检查编号、压头几何与位姿、有效输入高度帧哈希，并要求两批所有指定行程齐全、正算体积比为正、力平衡及残差通过。所有非零载荷步进入主要统计，任何不完整或不满足正算质量标准的轨迹使整次评估中止。
 
-另用种子 2027 生成 6 条复合外推测试。每条同时使用指数 3、新偏心区间、新倾角区间、留出平面角和深压入。第一轮发现强外推误差后，用种子 3011 独立补充 12 条训练、6 条开发轨迹，将训练上界扩到 3.12 mm、7.8 mm 偏心、22° 倾角，保持原测试集不变。重训后另报行程大于 3.12 mm 的测试子集。扩样仍保持指数 3 和 60°–100° 非球形平面角留出。
+[盲测协议](../../config/generalization_blind.json) · [权重冻结清单](../../results/stage-02-inverse/surface-generalization/20261121_expanded_training/freeze.json) · [逐轨迹测试清单](../../results/stage-02-inverse/surface-generalization/20261121_final_expanded/coverage.csv)
 
-## 训练和比较
+## 比较口径
 
-- **核岭回归**使用高度场深度、偏心和三个下陷等值区域的形状统计。用开发集选择核宽和正则权重。
-- **图像模型**用局部高度图及相同统计量估计力。中心位置直接从平滑高度推断。低载用观测下陷深度的 1.5 次幂作为输出缩放。
-- **离散能量 PINN**用高度图和统计量预测 28 个包含径向及各向异性分量的试函数系数。顶面竖向位移在结点当前平面位置重采样，合力由三维 Neo-Hookean 应力的有限元积分得到。网络训练同时使用反力标签和总应变能，能量权重为 0.001。当前试函数使用平移后的中心网格，边界位置效应可能限制位置外推。
+- 核岭和纯图像模型提供基线。能量 PINN 由局部图与形状统计预测 28 个内部位移系数，使用已知圆片网格和材料对应力积分。两个神经模型使用同样的 120 轮预算和高度噪声增强，用开发集选择检查点。
+- 各方法在同一批高度图上预测。标准差 25 µm 的高斯高度噪声使用固定种子。每个测试组的噪声实现跨方法完全相同。复合深压子集直接使用同一批预测中行程超过 3.12 mm 的帧。
+- 另对全部 54 帧干净复合高度图运行全阶曲面约束有限元反演。每帧从平坦参考构型开始，0.50 mm 高斯平滑和由高度图决定的网格加密中心均预先设定。反演与 PINN 的合力共同对照该帧的有限元接触正算。若有不收敛则保留失败记录，成对 MAE 在两者都有数值的帧上计算。
+- 学习方法的单帧 P95 从高度图已在计算设备上开始，包括预处理，先进行五次预热。归档使用 AMD Ryzen 7 PRO 5850U 和 2 个计算线程。全阶反演为并行离线评估，计时随各帧记录，相机、设备传输和闭环延迟需要单独测量。
 
-神经模型最多训练 120 轮，按开发集反力误差选权重。统一报告每组 MAE、偏差、最大绝对误差、0.2 N 以上的 MAPE、轨迹末步最大相对误差和单帧 P95。PINN 另检查 Gauss 点最小 J。在联合测试加入标准差 25 µm 的独立高斯噪声。合成工作目标沿用 MAE ≤0.05 N、所有末步误差 ≤5%、推理 P95 ≤5 ms。按工况组报告，不将训练外结果混入联合测试平均。
+## 盲测结果
 
-数值核查通过。等轴指数 2 的切线与原球头等价，倾斜指数 4 的切线差分相对误差为 4.13e-10，已有正问题和压入回归通过。主设计的 74 条轨迹全部完成，包含 528 个非零帧，最小体积比 0.313，最大自由残差 1.87e-8 N。配对细网格复核中，参考力至少 0.2 N 的 21 帧反力平均变化 2.91%，最大 5.78%。[网格配对数据](../../results/stage-02-inverse/surface-generalization/20261121_training/mesh_pairs.csv)
+下表的误差是竖向合力相对于有限元接触正算的 MAE。两个神经模型的冻结权重分别来自纯图像第 32 轮和 PINN 第 110 轮。
 
-## 已执行结果
+| 测试组 | 帧 | 核岭 MAE (N) | 纯图像 MAE (N) | PINN MAE (N) | PINN 最差末帧误差 | PINN CPU P95 (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 常规 | 63 | 0.02310 | 0.03774 | 0.00635 | 1.73% | 6.17 |
+| 常规，25 µm 噪声 | 63 | 0.02363 | 0.03792 | 0.03912 | 4.86% | 6.19 |
+| 复合外推 | 54 | 0.07115 | 0.14072 | 0.02484 | 3.56% | 5.76 |
+| 复合外推，25 µm 噪声 | 54 | 0.07070 | 0.14085 | 0.05068 | 3.68% | 5.98 |
+| 复合外推，行程 > 3.12 mm | 6 | 0.21552 | 0.39748 | 0.07901 | 3.56% | 5.80 |
 
-初始划分为 30 条训练和 8 条开发，7 条非球形轨迹从两类候选移到平面角留出。扩样后训练和开发分别为 42 条（318 帧）和 14 条（110 帧）。全部三批共 98 条完成轨迹、744 个非零帧。两批新增轨迹也满足最小体积比正值、最大自由残差低于 2e-8 N。测试按完整轨迹冻结。扩样是在发现深度挑战后决定，最终模型的训练和权重选择仅使用训练与开发数据。
+核岭在常规加噪组的 MAE 最低。PINN 的复合加噪和深压子集超过原 0.05 N MAE 目标。本机复合盲测的 CPU P95 高于原 5 ms 目标。
 
-下表每个单元依次为 **力 MAE / 最差轨迹末步相对误差 / 推理 P95**。P95 在 RTX 4060 Laptop 上测量，输入高度已在 GPU 内存，不含相机和传输。在线应力积分可只访问与顶面虚位移相关的楔体。逐帧与全网格积分对照，力差低于 1e-6 N。离线训练、能量及最小 J 审核仍使用全网格。
+全阶曲面约束反演在 54 帧干净复合盲测上全部收敛。与同一有限元正算参考相比，全阶反演的合力 MAE 为 0.07428 N，PINN 为 0.02484 N，在这批工况上低 66.6%。这个差值比较的是当前反演设置下的竖向合力。
 
-| 测试组 | 轨迹 / 帧 | 初始 PINN | 扩样、噪声增强 PINN |
-| --- | ---: | --- | --- |
-| 常规联合留出 | 9 / 63 | 0.00624 N / 2.08% / 3.74 ms | 0.00863 N / 2.73% / 3.75 ms |
-| 新形状 | 4 / 28 | 0.01624 N / 2.37% / 4.59 ms | 0.02032 N / 2.93% / 3.69 ms |
-| 更远偏心 | 4 / 28 | 0.00828 N / 1.70% / 3.06 ms | 0.00731 N / 1.05% / 3.84 ms |
-| 留出平面角 | 7 / 49 | 0.00944 N / 1.50% / 3.76 ms | 0.00894 N / 1.89% / 3.38 ms |
-| 更高倾角 | 4 / 28 | 0.00629 N / 1.39% / 3.75 ms | 0.00950 N / 1.68% / 4.18 ms |
-| 深度超过 2.70 mm | 4 / 8 | 0.02608 N / 2.11% / 3.16 ms | 0.04374 N / 4.49% / 5.42 ms |
-| 多因素同时外推 | 6 / 54 | 0.02183 N / 4.93% / 3.80 ms | 0.01893 N / 3.42% / 4.14 ms |
-| 多因素外推，取 >3.12 mm | 6 / 6 | 0.07530 N / 4.93% / 3.12 ms | 0.06261 N / 3.42% / 4.42 ms |
-| 多因素外推，25 µm 噪声 | 6 / 54 | 0.05509 N / 5.62% / 4.00 ms | 0.05086 N / 4.78% / 3.85 ms |
-| 配对细网格 | 4 / 30 | 0.01404 N / 3.38% / 4.01 ms | 0.02380 N / 4.87% / 3.36 ms |
+[三种模型合力指标](../../results/stage-02-inverse/surface-generalization/20261121_final_expanded/summary.json) · [同帧全阶反演指标](../../results/stage-02-inverse/surface-generalization/20261121_final_expanded/surface_inverse_summary.json) · [图件目录](../../results/stage-02-inverse/surface-generalization/20261122_email_figures/)
 
-初始核岭与图像模型在常规联合测试的 MAE 分别为 0.0118、0.0458 N，在复合外推分别为 0.0978、0.1318 N。扩样核岭在 CPU 上的复合外推 P95 为 1.81 ms，MAE 为 0.0609 N，末步最大误差 15.71%。能量 PINN 在这一复合工况有更小的合力误差。
+所有结果来自同材料与边界条件的仿真。三维变形和剖面用于显示估力路径。局部压力、接触区、实物材料标定和实时控制需另做验证。
 
-干净高度下，初始 PINN 的各单因素留出和复合外推整体达到预设目标。扩样降低了复合外推误差，最深复合子集和加噪复合组的 MAE 仍略高于目标，扩样版本单独深压组 P95 也超过目标。结果覆盖已采样的单压头、凸形状及固定材料。局部压力、非凸或多点接触以及实际闭环需另验。
+## 从头复现
 
-[初始模型成绩](../../results/stage-02-inverse/surface-generalization/20261121_final_baseline/summary.json) · [扩样模型成绩](../../results/stage-02-inverse/surface-generalization/20261121_final_expanded/summary.json) · [扩样模型权重](../../results/stage-02-inverse/surface-generalization/20261121_expanded_training/pinn.pt)
+以下 Bash 命令在仓库根目录执行。需要 MATLAB R2025b、Python 3.11 或以上、PyTorch、SciPy、NumPy、Matplotlib 和中文字体。已归档运行使用 Python 3.14.4、PyTorch 2.15.0 CPU、SciPy 1.18.1、NumPy 2.3.5。Windows 可在 MATLAB 中执行相同的函数调用并调整终端的变量语法。
 
-## 复现
+~~~bash
+palm_archive=results/stage-02-inverse/surface-generalization
+palm_run="$palm_archive/my_reproduction"
+export OPENBLAS_NUM_THREADS=2
 
-```matlab
-addpath('tests')
-verify_shaped_indentation
-run_generalization_samples(fullfile('results','stage-02-inverse', ...
-    'surface-generalization','my_design'));
-```
+python -B tools/train_generalization.py train "$palm_archive/20261121_design" "$palm_run/training" --extra-data "$palm_archive/20261121_extension" --noise-aug
 
-多进程采样时，可分别传入工作者编号和总数。各进程写入互斥的轨迹文件。
-第四个参数取 `combined` 或 `extension` 可生成对应额外批次，分别写入不同目录。
+matlab -singleCompThread -batch "run_generalization_samples('$palm_run/regular',1,1,'blind_regular','$palm_run/training/freeze.json'); run_generalization_samples('$palm_run/combined',1,1,'blind_combined','$palm_run/training/freeze.json');"
 
-```powershell
-python tools/train_generalization.py results/stage-02-inverse/surface-generalization/my_design results/stage-02-inverse/surface-generalization/my_training
-```
+python -B tools/train_generalization.py evaluate "$palm_run/regular" "$palm_run/evaluation" --extra-data "$palm_run/combined" --checkpoint-dir "$palm_run/training"
 
-用两次 `--extra-data` 加载额外批次，用 `--noise-aug` 增加训练扰动。固定模型复测用 `--checkpoint-dir`，只计顶层力积分时再加 `--paths pinn --fast-force`。
+mkdir -p "$palm_run/figures/source_data"
+matlab -singleCompThread -batch "run_blind_surface_inverse('$palm_run/combined','$palm_run/evaluation/surface_inverse','$palm_run/training/freeze.json'); export_pinn_figure_geometry('$palm_run/combined/blind_combined_05.mat','$palm_run/figures/source_data/blind_combined_05_fem.mat');"
 
-## 邮件与交流图件
+python -B tools/plot_pinn_email_figures.py --checkpoint "$palm_run/training" --evaluation "$palm_run/evaluation" --samples "$palm_run/combined" --output "$palm_run/figures"
+~~~
 
-[图件目录](../../results/stage-02-inverse/surface-generalization/20261122_email_figures/)包含总览、三维变形、剖面、六条载荷–行程曲线、逐帧精度、技术流程和球头反演对照。邮件正文适合使用总览，流程和细节图可用于后续交流。技术流程同时提供 PNG、SVG 和原生 draw.io XML。
-
-几何图采用复合留出工况 `combined_05` 的末步。有限元几何由同一工况回放导出，载荷行程与归档逐步比对。PINN 使用保存的扩样权重和同一帧高度重构位移。箭头表示向下合力，作用位置为示意。有限元曲面约束耗时来自中心和偏心球头工况，PINN 耗时来自复合留出工况中高度图就绪后的 GPU 推理。
-
-```matlab
-archive = fullfile('results','stage-02-inverse','surface-generalization');
-out = fullfile(archive,'20261122_email_figures','source_data');
-if ~isfolder(out), mkdir(out); end
-export_pinn_figure_geometry( ...
-    fullfile(archive,'20261121_combined','combined_05.mat'), ...
-    fullfile(out,'combined_05_fem.mat'));
-```
-
-```powershell
-python -B tools/plot_pinn_email_figures.py
-```
+同一冻结清单下，多进程 MATLAB 生成可使用不同的 `worker` 参数将轨迹均分。重新使用已公开的种子是复现。如更改模型设计，应在新协议中预先指定一批新的测试工况。
