@@ -1,0 +1,4 @@
+# Preserve byte hashes for the frozen experiment on Windows checkouts.
+*.py text eol=lf
+*.m text eol=lf
+*.json text eol=lf

@@ -1,7 +1,9 @@
-"""Train force estimators from grouped indentation trajectories."""
+"""Freeze height-to-force estimators, then score a fresh blind FEM batch."""
 
 import argparse
 import csv
+from datetime import datetime, timezone
+import hashlib
 import json
 from pathlib import Path
 import time
@@ -12,7 +14,15 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from train_surface_surrogate import VariationalModel, sync
+from train_surface_surrogate import MESH, ROOT, VariationalModel, sync
+
+
+PROTOCOL = ROOT/"config/generalization_blind.json"
+METHODS = ("ridge", "image", "pinn")
+HISTORY_GROUPS = {"train", "development"}
+BLIND_PREFIXES = {"test": "blind_test", "combined": "blind_combined"}
+RESULT_COLUMNS = ("Trajectory", "Travel_mm", "Reference_N", "Estimate_N", "Latency_ms",
+                  "MinJGauss", "FastForceDifference_N")
 
 
 class Observations:
@@ -106,45 +116,108 @@ class Network(nn.Module):
         return self.out(torch.cat((self.image(patch), features), dim=1))
 
 
-def read_dataset(folders, device):
+def sha256(path):
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def implementation_hashes():
+    files = [PROTOCOL, MESH, Path(__file__).resolve(), ROOT/"tools/train_surface_surrogate.py",
+             ROOT/"run_generalization_samples.m", ROOT/"run_indentation.m",
+             ROOT/"run_blind_surface_inverse.m"]
+    files += sorted((ROOT/"config").glob("*.m"))
+    files += sorted((ROOT/"src").rglob("*.m"))
+    return {path.relative_to(ROOT).as_posix(): sha256(path) for path in files}
+
+
+def tool_pose(spec):
+    axes = np.asarray(spec["axes"]).tolist()
+    sphere = spec["power"] == 2 and np.ptp(axes) < 1e-10
+    angles = [0, 0] if sphere else [spec["yaw_deg"], spec["tilt_deg"]]
+    return [spec["power"], *axes, *angles, *np.asarray(spec["center_mm"]).tolist()]
+
+
+def read_dataset(folders, device, protocol, freeze_token=None):
     groups = {}
     records = []
-    paths = [path for folder in folders for path in sorted(folder.glob("*.mat"))
-             if path.stem != "design"]
+    for folder in folders:
+        if not folder.is_dir():
+            raise ValueError(f"Sample directory does not exist: {folder}")
+    paths = sorted(path for folder in folders for path in folder.glob("*.mat")
+                   if path.stem != "design")
     if len({path.stem for path in paths}) != len(paths):
         raise ValueError("Trajectory identifiers must be unique across data directories.")
+    blind = freeze_token is not None
+    if blind:
+        expected = {
+            f"{prefix}_{i:02d}": (group, protocol[f"{kind}_nonzero_steps"])
+            for group, prefix in BLIND_PREFIXES.items()
+            for kind in ("regular" if group == "test" else group,)
+            for i in range(1, protocol[f"{kind}_trajectories"]+1)
+        }
+        if {path.stem for path in paths} != expected.keys():
+            raise ValueError("Blind batch differs from the prescribed full trajectory list.")
+    elif any(path.stem.startswith("blind_") for path in paths):
+        raise ValueError("Final blind samples cannot be supplied to training.")
+
     for path in paths:
+        if blind:
+            group, steps = expected[path.stem]
+        else:
+            group = path.stem.split("_")[0]
+            if group not in HISTORY_GROUPS:
+                continue
+            spec = loadmat(path, simplify_cells=True, variable_names=["spec"])["spec"]
+            if 60 <= spec["yaw_deg"] <= 100 and not (
+                    spec["power"] == 2 and np.ptp(spec["axes"]) < 1e-10):
+                continue
+            steps = len(spec["depths_mm"])
         mat = loadmat(path, simplify_cells=True, variable_names=[
-            "heights", "travel", "force", "spec", "diagnostics", "seconds"])
+            "heights", "travel", "force", "spec", "diagnostics", "seconds", "freezeToken"])
         spec = mat["spec"]
-        file_group = path.stem.split("_")[0]
-        group = file_group
-        if group in ("train", "development") and 60 <= spec["yaw_deg"] <= 100 and not (
-                spec["power"] == 2 and np.ptp(spec["axes"]) < 1e-10):
-            group = "yaw"
+        if (blind and (spec["id"] != path.stem or mat.get("freezeToken") != freeze_token) or
+                not blind and mat.get("freezeToken") is not None):
+            raise ValueError(f"{path.name} has mismatched identity or was not generated after this freeze.")
         travel = np.atleast_1d(mat["travel"])
         force = np.atleast_1d(mat["force"])
-        complete = len(travel) == len(np.atleast_1d(spec["depths_mm"]))+1
-        records.append((path.stem, group, len(travel)-1, complete, mat["seconds"]))
-        if len(travel) <= 1:
-            continue
         diagnostics = np.atleast_2d(mat["diagnostics"])
-        good = (force > 0) & (diagnostics[:, 6] > 0) & (diagnostics[:, 7] <= 2.1e-8)
-        if group == "deep":
-            good &= travel>2.7
-        array = np.moveaxis(np.atleast_3d(mat["heights"]), -1, 0)[good]
+        if (len(travel) != steps+1 or
+                not np.array_equal(travel, np.r_[0, spec["depths_mm"]]) or
+                not np.isfinite(diagnostics[:, 2:]).all() or not np.isfinite(force).all() or
+                np.any(abs(force-diagnostics[:, 4]) >= 1e-6) or
+                np.any(force[1:] <= 0) or np.any(diagnostics[:, 6] <= 0) or
+                np.any(diagnostics[:, 7] > protocol["reference_residual_limit_N"])):
+            raise ValueError(f"{path.name} failed the complete-trajectory reference checks.")
+        # Score every prescribed nonzero step. A bad reference aborts the batch.
+        array = np.moveaxis(mat["heights"], -1, 0)[1:]
         valid = np.isfinite(array)
+        if array.shape != (steps, 201, 201) or not valid.any(axis=(1, 2)).all():
+            raise ValueError(f"{path.name} has missing or malformed height frames.")
         raw = np.where(valid, 5-array, 0)
-        groups.setdefault(group, []).append((raw, force[good], travel[good], valid,
-                                            np.repeat(path.stem, np.count_nonzero(good))))
+        frame_hashes = [hashlib.sha256(np.ascontiguousarray(frame, dtype="<f4")).hexdigest()
+                        for frame in raw]
+        records.append(dict(trajectory=path.stem, group=group, frames=steps,
+                            seconds=mat["seconds"], input_sha256=sha256(path),
+                            tool_pose=tool_pose(spec), frame_sha256=frame_hashes))
+        groups.setdefault(group, []).append((raw, force[1:], travel[1:], valid,
+                                            np.repeat(path.stem, steps)))
     joined = {}
     for group, rows in groups.items():
         z, forces, depth, mask, labels = (np.concatenate(field) for field in zip(*rows))
-        if len(forces):
-            joined[group] = (torch.as_tensor(z, device=device, dtype=torch.float32),
-                             torch.as_tensor(forces, device=device, dtype=torch.float32),
-                             depth, mask, labels)
+        joined[group] = (torch.as_tensor(z, device=device, dtype=torch.float32),
+                         torch.as_tensor(forces, device=device, dtype=torch.float32),
+                         depth, mask, labels)
     return joined, records
+
+
+def check_disjoint(first, second):
+    for field, items in (
+        ("IDs", lambda row: [row["trajectory"]]),
+        ("tool geometries and poses", lambda row: [tuple(row["tool_pose"])]),
+        ("height frames", lambda row: row["frame_sha256"]),
+    ):
+        if {item for row in first for item in items(row)} & {item for row in second for item in items(row)}:
+            raise ValueError(f"Dataset splits share {field}.")
 
 
 def predict(network, inputs, decoder=None, force_only=False):
@@ -190,6 +263,9 @@ def train(preprocess, training, dev, device, epochs, decoder=None, noisy=False):
         if error<best[0]:
             best = (error, {key: val.detach().clone() for key, val in network.state_dict().items()},
                     epoch+1)
+        if (epoch+1) % 10 == 0 or epoch+1 == epochs:
+            print(f"{'pinn' if decoder else 'image'} epoch {epoch+1}/{epochs}: "
+                  f"dev scaled MAE {error:.5f}, elapsed {time.perf_counter()-started:.1f} s", flush=True)
     sync(device)
     network.load_state_dict(best[1])
     return network, {"development_scaled_mae": best[0], "epoch": best[2],
@@ -238,25 +314,26 @@ def ridge_predict(inputs, parameters):
     return float(depth.item()**1.5*np.exp(gain))
 
 
-def evaluate(preprocess, estimator, data, device, physical, noise_um=0, fast=False):
+def evaluate(preprocess, estimator, data, device, physical, noise_um=0, noise_seed=7621):
     heights, forces, travel, mask, labels = data
     if noise_um:
-        rng = np.random.default_rng(7621)
+        rng = np.random.default_rng(noise_seed)
         values = rng.normal(0, noise_um/1000, mask.shape).astype(np.float32)*mask
         heights = heights+torch.as_tensor(values, device=device)
     reference = forces.cpu().numpy()
     rows = []
     with torch.inference_mode():
-        estimator(preprocess(heights[:1], physical), fast)
+        for _ in range(5):
+            estimator(preprocess(heights[:1], physical), physical)
         for i, height in enumerate(heights):
             sync(device)
             start = time.perf_counter()
             inputs = preprocess(height[None], physical)
-            force, minimum = estimator(inputs, fast)
+            force, minimum = estimator(inputs, physical)
             sync(device)
             elapsed = (time.perf_counter()-start)*1000
             difference = 0
-            if fast and physical:
+            if physical:
                 full_force, minimum = estimator(inputs)
                 difference = abs(full_force-force)
                 assert difference<5e-5, "Top-layer and full-mesh force integrals differ."
@@ -283,85 +360,153 @@ def summary(rows):
     }
 
 
-def main():
-    cmd = argparse.ArgumentParser(description=__doc__)
-    cmd.add_argument("data", type=Path)
-    cmd.add_argument("output", type=Path)
-    cmd.add_argument("--epochs", type=int, default=120)
-    cmd.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
-    cmd.add_argument("--paths", nargs="+", choices=("ridge", "image", "pinn"), default=["ridge","image","pinn"])
-    cmd.add_argument("--noise-aug", action="store_true")
-    cmd.add_argument("--checkpoint-dir", type=Path)
-    cmd.add_argument("--extra-data", action="append", type=Path, default=[])
-    cmd.add_argument("--fast-force", action="store_true")
-    args = cmd.parse_args()
-    if args.epochs<1:
-        cmd.error("Epoch count must be positive.")
+def write_json(path, data):
+    path.write_text(json.dumps(data, indent=2, allow_nan=False)+"\n", encoding="utf-8")
+
+
+def write_table(path, columns, rows):
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(columns)
+        writer.writerows(rows)
+
+
+def write_coverage(output, records):
+    write_table(output/"coverage.csv", ("Trajectory", "Group", "Frames", "Seconds", "InputSHA256"),
+                ([row[key] for key in ("trajectory", "group", "frames", "seconds", "input_sha256")]
+                 for row in records))
+
+
+def fit_models(args, device, protocol):
+    groups, records = read_dataset([args.data, *args.extra_data], device, protocol)
+    if groups.keys() != HISTORY_GROUPS:
+        raise ValueError("Separate training and development trajectories are required.")
+    check_disjoint(*(list(row for row in records if row["group"] == group)
+                     for group in ("train", "development")))
+    implementation = implementation_hashes()
     args.output.mkdir(parents=True, exist_ok=False)
-    (args.output/"configuration.json").write_text(json.dumps(vars(args), indent=2, default=str),
-                                                   encoding="utf-8")
-    torch.set_num_threads(2)
-    device = torch.device(args.device)
-    groups, records = read_dataset([args.data, *args.extra_data], device)
-    with (args.output/"coverage.csv").open("w", newline="") as file:
-        w = csv.writer(file)
-        w.writerow(("Trajectory","Group","ConvergedFrames","Complete","Seconds"))
-        w.writerows(records)
+    write_coverage(args.output, records)
     observation = Observations(device)
-    for key in ("deep", "combined"):
-        if key in groups and np.any(groups[key][2]>3.12):
-            dataset = groups[key]
-            keep = dataset[2]>3.12
-            tensor_mask = torch.as_tensor(keep, device=device)
-            groups[key+"_beyond_3p12"] = (dataset[0][tensor_mask], dataset[1][tensor_mask],
-                                         *(field[keep] for field in dataset[2:]))
-    report = {}
-    for method in args.paths:
+    details = {}
+    checkpoints = {}
+    for method in METHODS:
         torch.manual_seed(826)
-        started = time.perf_counter()
-        decoder = Decoder(device) if method=="pinn" else None
-        if method=="ridge":
-            if args.checkpoint_dir:
-                with np.load(args.checkpoint_dir/"ridge.npz") as stored:
-                    parameters = dict(stored.items())
-                details = {}
-            else:
-                parameters, dev = ridge(observation, groups["train"], groups["development"])
-                np.savez(args.output/"ridge.npz", **parameters)
-                details = {"development_scaled_mae": dev, "seconds": time.perf_counter()-started}
+        if method == "ridge":
+            parameters, dev = ridge(observation, groups["train"], groups["development"])
+            path = args.output/"ridge.npz"
+            np.savez(path, **parameters)
+            details[method] = {"development_scaled_mae": dev}
+        else:
+            decoder = Decoder(device) if method == "pinn" else None
+            model, details[method] = train(observation, groups["train"], groups["development"],
+                                           device, args.epochs, decoder, args.noise_aug)
+            path = args.output/f"{method}.pt"
+            torch.save(model.state_dict(), path)
+        checkpoints[path.name] = sha256(path)
+    if implementation_hashes() != implementation:
+        raise ValueError("Implementation changed during training. Start a new run.")
+    write_json(args.output/"training.json", details)
+    write_json(args.output/"freeze.json", {
+        "version": 1, "frozen_utc": datetime.now(timezone.utc).isoformat(),
+        "blind_protocol_sha256": sha256(PROTOCOL), "implementation": implementation,
+        "checkpoints": checkpoints, "training_records": records,
+        "training_environment": {"device": args.device, "threads": args.threads,
+                                 "torch": torch.__version__, "numpy": np.__version__},
+        "epochs": args.epochs, "noise_aug": args.noise_aug,
+    })
+    print(f"Frozen model manifest SHA-256: {sha256(args.output/'freeze.json')}", flush=True)
+
+
+def score_models(args, device, protocol):
+    manifest = args.checkpoint_dir/"freeze.json"
+    lock = json.loads(manifest.read_text(encoding="utf-8"))
+    if lock["version"] != 1 or lock["implementation"] != implementation_hashes():
+        raise ValueError("The test protocol, FEM input mesh or implementation changed after training.")
+    if lock["checkpoints"].keys() != {"ridge.npz", "image.pt", "pinn.pt"}:
+        raise ValueError("The frozen comparison must include ridge, image and PINN.")
+    for name, digest in lock["checkpoints"].items():
+        if sha256(args.checkpoint_dir/name) != digest:
+            raise ValueError(f"Checkpoint {name} changed after training.")
+    token = sha256(manifest)
+    groups, records = read_dataset([args.data, *args.extra_data], device, protocol, token)
+    check_disjoint(lock["training_records"], records)
+    check_disjoint(*(list(row for row in records if row["group"] == group)
+                     for group in ("test", "combined")))
+    data = groups["combined"]
+    keep = data[2] > protocol["deep_threshold_mm"]
+    if not keep.any():
+        raise ValueError("The prescribed deep subset is empty.")
+
+    args.output.mkdir(parents=True, exist_ok=False)
+    write_coverage(args.output, records)
+    write_json(args.output/"evaluation.json", {
+        "freeze_sha256": token, "blind_protocol": protocol,
+        "device": args.device, "threads": args.threads, "torch": torch.__version__,
+        "numpy": np.__version__, "evaluated_utc": datetime.now(timezone.utc).isoformat(),
+        "timing": "CPU/GPU single-frame inference including height preprocessing, after five warmups",
+    })
+    observation = Observations(device)
+    report = {}
+    for method in METHODS:
+        decoder = Decoder(device) if method == "pinn" else None
+        if method == "ridge":
+            with np.load(args.checkpoint_dir/"ridge.npz") as stored:
+                parameters = dict(stored.items())
 
             def estimator(inputs, fast=False):
                 return ridge_predict(inputs, parameters), np.nan
         else:
-            if args.checkpoint_dir:
-                model = Network(28 if decoder else 1).to(device)
-                weights = torch.load(args.checkpoint_dir/f"{method}.pt", weights_only=True,
-                                     map_location=device)
-                model.load_state_dict(weights)
-                details = {}
-            else:
-                model, details = train(observation, groups["train"], groups["development"], device,
-                                       args.epochs, decoder, args.noise_aug)
-                torch.save(model.state_dict(), args.output/f"{method}.pt")
+            model = Network(28 if decoder else 1).to(device).eval()
+            weights = torch.load(args.checkpoint_dir/f"{method}.pt", weights_only=True,
+                                 map_location=device)
+            model.load_state_dict(weights)
 
             def estimator(inputs, fast=False):
                 force, _, j = predict(model, inputs, decoder, fast)
                 return force.item(), j.item() if j is not None else np.nan
 
-        report[method] = {"training": details}
-        evaluations = [(key,key,0) for key in groups if key!="train"]
-        evaluations += [(key+"_noise25",key,25) for key in ("test", "combined") if key in groups]
-        for label, group, noise in evaluations:
-            rows = evaluate(observation, estimator, groups[group], device, decoder is not None, noise,
-                            args.fast_force)
-            with (args.output/f"{method}_{label}.csv").open("w", newline="") as file:
-                w = csv.writer(file)
-                w.writerow(("Trajectory","Travel_mm","Reference_N","Estimate_N","Latency_ms",
-                            "MinJGauss","FastForceDifference_N"))
-                w.writerows(rows)
-            report[method][label] = summary(rows)
-            print(method, label, report[method][label], flush=True)
-        (args.output/"summary.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+        report[method] = {}
+        for group in ("test", "combined"):
+            for noise in (0, protocol["height_noise_um"]):
+                label = f"{group}_noise{noise}" if noise else group
+                rows = evaluate(observation, estimator, groups[group], device, decoder is not None,
+                                noise, protocol["noise_seed"])
+                write_table(args.output/f"{method}_{label}.csv", RESULT_COLUMNS, rows)
+                report[method][label] = summary(rows)
+                if label == "combined":
+                    # Reuse exactly these predictions; a subgroup should not trigger a new benchmark.
+                    deep = [row for row, selected in zip(rows, keep) if selected]
+                    write_table(args.output/f"{method}_combined_beyond_3p12.csv", RESULT_COLUMNS, deep)
+                    report[method]["combined_beyond_3p12"] = summary(deep)
+                stats = report[method][label]
+                print(f"{method:5s} {label:18s} {len(rows):3d} frames  "
+                      f"MAE {stats['MAE_N']:.5f} N  P95 {stats['P95_ms']:.3f} ms", flush=True)
+    write_json(args.output/"summary.json", report)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    modes = parser.add_subparsers(dest="mode", required=True)
+    for mode in ("train", "evaluate"):
+        command = modes.add_parser(mode)
+        command.add_argument("data", type=Path)
+        command.add_argument("output", type=Path)
+        command.add_argument("--extra-data", action="append", type=Path, default=[])
+        command.add_argument("--device", choices=("cuda", "cpu"), default="cpu")
+        command.add_argument("--threads", type=int, default=2)
+    modes.choices["train"].add_argument("--epochs", type=int, default=120)
+    modes.choices["train"].add_argument("--noise-aug", action="store_true")
+    modes.choices["evaluate"].add_argument("--checkpoint-dir", type=Path, required=True)
+    args = parser.parse_args()
+    if args.threads < 1 or (args.mode == "train" and args.epochs < 1):
+        parser.error("Thread and epoch counts must be positive.")
+    torch.set_num_threads(args.threads)
+    device = torch.device(args.device)
+    protocol = json.loads(PROTOCOL.read_text(encoding="utf-8"))
+    if args.mode == "train":
+        fit_models(args, device, protocol)
+    else:
+        score_models(args, device, protocol)
 
 
 if __name__ == "__main__":

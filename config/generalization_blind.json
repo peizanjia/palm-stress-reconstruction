@@ -1,0 +1,14 @@
+{
+  "regular_seed": 4847,
+  "combined_seed": 7351,
+  "regular_trajectories": 9,
+  "combined_trajectories": 6,
+  "regular_nonzero_steps": 7,
+  "combined_nonzero_steps": 9,
+  "deep_threshold_mm": 3.12,
+  "height_noise_um": 25,
+  "noise_seed": 7621,
+  "reference_residual_limit_N": 2.1e-8,
+  "geometry_case": "blind_combined_05",
+  "surface_inverse_smoothing_mm": 0.5
+}

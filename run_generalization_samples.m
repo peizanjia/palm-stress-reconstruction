@@ -1,4 +1,4 @@
-function run_generalization_samples(directory,worker,workers,batch)
+function run_generalization_samples(directory,worker,workers,batch,freezeFile)
 % Generate deterministic, trajectory-separated indentation data.
 root = fileparts(mfilename('fullpath'));
 addpath(fullfile(root,'src'),fullfile(root,'config'));
@@ -13,16 +13,36 @@ validateattributes(worker,{'numeric'},{'scalar','integer','positive','<=',worker
 if nargin<4
     batch = 'factorial';
 end
-batch = validatestring(batch,{'factorial','combined','extension'});
+batch = validatestring(batch,{'factorial','combined','extension','blind_regular','blind_combined'});
+blindRegular = strcmp(batch,'blind_regular');
+blindCombined = strcmp(batch,'blind_combined');
+freezeToken = '';
+if blindRegular || blindCombined
+    assert(nargin>=5 && isfile(freezeFile),'Freeze model weights before generating blind samples.');
+    protocolPath = fullfile(root,'config','generalization_blind.json');
+    protocol = jsondecode(fileread(protocolPath));
+    lock = jsondecode(fileread(freezeFile));
+    assert(lock.version==1 && strcmp(lock.blind_protocol_sha256,fileDigest(protocolPath)), ...
+        'The frozen model and blind test protocol disagree.');
+    freezeToken = fileDigest(freezeFile);
+end
 if ~isfolder(directory)
     mkdir(directory);
 end
 rng(826,'twister');
 splits = ["train","development","test","shape","position","tilt","deep","mesh"];
 counts = [36,9,9,4,4,4,4,4];
-combined = strcmp(batch,'combined');
+combined = strcmp(batch,'combined') || blindCombined;
 extension = strcmp(batch,'extension');
-if combined
+if blindRegular
+    rng(protocol.regular_seed,'twister');
+    splits = "blind_test";
+    counts = protocol.regular_trajectories;
+elseif blindCombined
+    rng(protocol.combined_seed,'twister');
+    splits = "blind_combined";
+    counts = protocol.combined_trajectories;
+elseif combined
     rng(2027,'twister');
     splits = "combined";
     counts = 6;
@@ -102,15 +122,33 @@ end
 for k = worker:workers:numel(records)
     spec = records(k);
     destination = fullfile(directory,spec.id+".mat");
+    if ~isempty(freezeToken)
+        spec.id = char(spec.id);
+        spec.split = char(spec.split);
+    end
     if isfile(destination)
+        if ~isempty(freezeToken)
+            cached = load(destination,'freezeToken','spec');
+            assert(isfield(cached,'freezeToken') && strcmp(cached.freezeToken,freezeToken) && ...
+                isequal(cached.spec,spec),'Blind sample belongs to another model or design.');
+        end
         continue
     end
     cfg = palm.indent.generalizationConfig(spec);
-    writeCase(destination,cfg,spec);
+    writeCase(destination,cfg,spec,freezeToken);
 end
 end
 
-function writeCase(destination,cfg,spec)
+function digest = fileDigest(path)
+fid = fopen(path,'r');
+assert(fid>=0,'Could not read %s.',path);
+cleanup = onCleanup(@() fclose(fid));
+sha = java.security.MessageDigest.getInstance('SHA-256');
+sha.update(fread(fid,Inf,'*int8'));
+digest = lower(reshape(dec2hex(typecast(sha.digest(),'uint8'),2).',1,[]));
+end
+
+function writeCase(destination,cfg,spec,freezeToken)
 spacing = 0.25;
 axis = -cfg.radius:spacing:cfg.radius;
 [xx,yy] = meshgrid(axis,axis);
@@ -131,7 +169,11 @@ diagnostics = diagnostics(1:used,:);
 travel = diagnostics(:,1);
 force = diagnostics(:,4);
 seconds = toc(started);
-save(destination,'heights','travel','force','spec','status','diagnostics','axis','seconds');
+if isempty(freezeToken)
+    save(destination,'heights','travel','force','spec','status','diagnostics','axis','seconds');
+else
+    save(destination,'heights','travel','force','spec','status','diagnostics','axis','seconds','freezeToken');
+end
 fprintf('%s %d/%d, %.1f s, %s\n',spec.id,max(0,used-1),n-1,seconds,status);
 
     function record(step,model,state,data)
