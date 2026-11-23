@@ -1,5 +1,7 @@
 /results/
 *.asv
+__pycache__/
+*.py[cod]
 
 # Publisher PDF is available from its DOI and is not a runtime input.
 /*.pdf

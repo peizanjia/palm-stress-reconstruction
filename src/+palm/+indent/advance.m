@@ -46,11 +46,27 @@ for target = cfg.depths(:)'
         end
     end
     if diagnostics.upperContact
-        result = output(history,n,acceptedU,model,"contact reached above the half-sphere");
+        message = "contact reached above the half-sphere";
+        if isfield(cfg,'probeShape')
+            message = "contact reached the upper probe surface";
+        end
+        result = output(history,n,acceptedU,model,message);
         return
     end
     acceptedU = u;
-    [cap,radius,penetration] = palm.indent.capDepth(model,cfg,u(1:3*model.n),depth);
+    if isfield(cfg,'probeShape')
+        current = model.X+reshape(u(1:3*model.n),[],3);
+        gap = palm.indent.shapedGap(model,cfg,current,depth,false);
+        top = model.contactNodes;
+        a = current(top(:,2),:)-current(top(:,1),:);
+        b = current(top(:,3),:)-current(top(:,1),:);
+        area = abs(a(:,1).*b(:,2)-a(:,2).*b(:,1))/2;
+        radius = sqrt(sum((model.faceWeight'*(gap<0)).*area')/pi);
+        penetration = -min(gap,[],'all');
+        cap = NaN;
+    else
+        [cap,radius,penetration] = palm.indent.capDepth(model,cfg,u(1:3*model.n),depth);
+    end
     n = n+1;
     history(n,:) = [depth,cap,radius,diagnostics.force,diagnostics.reaction, ...
         penetration,palm.fem.minimumJacobian(model,u(1:3*model.n)),diagnostics.residual];
@@ -58,7 +74,7 @@ for target = cfg.depths(:)'
         onStep(n,model,u,history(n,:));
     end
     maxCap = max(cap,maxCap);
-    if maxCap >= cfg.maxCapDepth
+    if ~isfield(cfg,'probeShape') && maxCap >= cfg.maxCapDepth
         result = output(history,n,u,model,"cap-depth target reached");
         return
     end

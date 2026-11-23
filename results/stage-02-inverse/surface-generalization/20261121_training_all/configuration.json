@@ -1,0 +1,14 @@
+{
+  "data": "results\\stage-02-inverse\\surface-generalization\\20261121_design",
+  "output": "results\\stage-02-inverse\\surface-generalization\\20261121_training_all",
+  "epochs": 120,
+  "device": "cuda",
+  "paths": [
+    "ridge",
+    "image",
+    "pinn"
+  ],
+  "noise_aug": false,
+  "checkpoint_dir": null,
+  "extra_data": []
+}

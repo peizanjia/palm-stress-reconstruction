@@ -12,7 +12,14 @@ if isempty(internal)
     return
 end
 x = model.X + reshape(u,[],3);
-[gap,normal,rho,q] = palm.indent.probeGap(model,cfg,x,depth);
+shaped = isfield(cfg,'probeShape');
+if shaped
+    [gap,normal,curvature] = palm.indent.shapedGap(model,cfg,x,depth,withTangent);
+    upper = normal(:,:,3)>0;
+else
+    [gap,normal,rho,q] = palm.indent.probeGap(model,cfg,x,depth);
+    upper = q(:,:,3)>0;
+end
 nTriangles = size(model.contactNodes,1);
 f = zeros(nTriangles,9);
 for i = 1:3
@@ -24,15 +31,21 @@ residual = internal+contact;
 diag.force = sum(f(:,7:9),'all');
 fixedZ = model.fixed(model.fixed>2*model.n);
 diag.reaction = sum(residual(fixedZ));
-diag.upperContact = any(gap<0 & q(:,:,3)>0,'all');
+diag.upperContact = any(gap<0 & upper,'all');
 if withTangent
     elementK = zeros(9,9,nTriangles);
-    ratio = gap./rho;
+    if ~shaped
+        ratio = gap./rho;
+    end
     for i = 1:3
         rows = (i-1)*3+(1:3);
         for j = 1:3
             cols = (j-1)*3+(1:3);
-            term = (1-ratio).*normal(:,:,i).*normal(:,:,j)+(i==j)*ratio;
+            if shaped
+                term = normal(:,:,i).*normal(:,:,j)+gap.*curvature(:,:,i,j);
+            else
+                term = (1-ratio).*normal(:,:,i).*normal(:,:,j)+(i==j)*ratio;
+            end
             integrated = model.products'*(model.contactWeight.*(gap<0).*term);
             elementK(rows,cols,:) = reshape(integrated,3,3,nTriangles);
         end

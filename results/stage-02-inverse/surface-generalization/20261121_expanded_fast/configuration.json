@@ -1,0 +1,16 @@
+{
+  "data": "results\\stage-02-inverse\\surface-generalization\\20261121_design",
+  "output": "results\\stage-02-inverse\\surface-generalization\\20261121_expanded_fast",
+  "epochs": 120,
+  "device": "cuda",
+  "paths": [
+    "pinn"
+  ],
+  "noise_aug": false,
+  "checkpoint_dir": "results\\stage-02-inverse\\surface-generalization\\20261121_expanded_training",
+  "extra_data": [
+    "results\\stage-02-inverse\\surface-generalization\\20261121_extension",
+    "results\\stage-02-inverse\\surface-generalization\\20261121_combined"
+  ],
+  "fast_force": true
+}

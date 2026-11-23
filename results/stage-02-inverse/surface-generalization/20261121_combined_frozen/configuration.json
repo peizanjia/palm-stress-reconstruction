@@ -1,0 +1,14 @@
+{
+  "data": "results\\stage-02-inverse\\surface-generalization\\20261121_combined",
+  "output": "results\\stage-02-inverse\\surface-generalization\\20261121_combined_frozen",
+  "epochs": 120,
+  "device": "cuda",
+  "paths": [
+    "ridge",
+    "image",
+    "pinn"
+  ],
+  "noise_aug": false,
+  "checkpoint_dir": "results\\stage-02-inverse\\surface-generalization\\20261121_training",
+  "extra_data": []
+}

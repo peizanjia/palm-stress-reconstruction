@@ -1,0 +1,9 @@
+{
+  "case": "combined_05",
+  "travel_mm": 3.238143935467889,
+  "fem_N": 4.18952027658191,
+  "pinn_N": 4.172332763671875,
+  "fem_replay_vs_trajectory_max_N": 0.0,
+  "fem_replay_vs_prediction_csv_N": 1.234180899700732e-07,
+  "reconstructed_pinn_vs_prediction_csv_N": 5.7220458984375e-06
+}

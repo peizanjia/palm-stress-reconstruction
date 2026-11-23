@@ -51,12 +51,20 @@ for q = 1:nQuad
 end
 
 travel = diagnostics(1);
-[gap,sphereNormal,~,relative,center] = palm.indent.probeGap(model,cfg,X,travel);
-frame.quadratureXYZ_mm = permute(relative+reshape(center,1,1,3),[2,1,3]);
+if isfield(cfg,'probeShape')
+    [gap,normal,~,points] = palm.indent.shapedGap(model,cfg,X,travel,false);
+else
+    [gap,normal,~,relative,center] = palm.indent.probeGap(model,cfg,X,travel);
+    points = relative+reshape(center,1,1,3);
+end
+frame.quadratureXYZ_mm = permute(points,[2,1,3]);
 frame.gapPenetration_mm = -gap';
 pressure = -model.contactStiffness*gap' .* (meta.referenceArea_mm2./currentArea);
 frame.contactPressure_MPa = pressure;
-frame.contactTraction_MPa = pressure.*permute(sphereNormal,[2,1,3]);
+if isfield(cfg,'probeShape')
+    frame.contactPressure_MPa = pressure.*vecnorm(normal,2,3)';
+end
+frame.contactTraction_MPa = pressure.*permute(normal,[2,1,3]);
 frame.contactActive = gap'<0;
 weightedArea = currentArea*meta.quadratureWeights';
 frame.contactForce_N = reshape(sum(weightedArea.*frame.contactTraction_MPa,[1,2]),1,3);

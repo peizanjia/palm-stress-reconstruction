@@ -1,0 +1,213 @@
+{
+  "ridge": {
+    "training": {
+      "development_scaled_mae": 0.009844734461749232,
+      "seconds": 0.42593330005183816
+    },
+    "deep": {
+      "trajectories": 4,
+      "frames": 8,
+      "MAE_N": 0.056872484858819516,
+      "Bias_N": 0.03403215317548941,
+      "MaxAbs_N": 0.13926386408157398,
+      "MAPE_above_0p2N_pct": 2.124911826330657,
+      "MaxFinalAPE_pct": 6.524228013215239,
+      "P95_ms": 2.32637005392462,
+      "MinJGauss": null
+    },
+    "development": {
+      "trajectories": 8,
+      "frames": 56,
+      "MAE_N": 0.01186966820167811,
+      "Bias_N": 0.00111203239853006,
+      "MaxAbs_N": 0.14112390496877536,
+      "MAPE_above_0p2N_pct": 1.145505489182253,
+      "MaxFinalAPE_pct": 4.562712291275854,
+      "P95_ms": 2.9323750641196966,
+      "MinJGauss": null
+    },
+    "yaw": {
+      "trajectories": 7,
+      "frames": 49,
+      "MAE_N": 0.02972970556213125,
+      "Bias_N": -0.016243933933662576,
+      "MaxAbs_N": 0.20087259860747775,
+      "MAPE_above_0p2N_pct": 2.5385254444260377,
+      "MaxFinalAPE_pct": 4.989612677711879,
+      "P95_ms": 3.022060031071304,
+      "MinJGauss": null
+    },
+    "mesh": {
+      "trajectories": 4,
+      "frames": 30,
+      "MAE_N": 0.029949290657357408,
+      "Bias_N": 0.021616642569283005,
+      "MaxAbs_N": 0.14933348563516713,
+      "MAPE_above_0p2N_pct": 2.2123000635209515,
+      "MaxFinalAPE_pct": 6.02677658753043,
+      "P95_ms": 2.7146200183778997,
+      "MinJGauss": null
+    },
+    "position": {
+      "trajectories": 4,
+      "frames": 28,
+      "MAE_N": 0.02488780626065534,
+      "Bias_N": -0.002434453045301724,
+      "MaxAbs_N": 0.11580436730134203,
+      "MAPE_above_0p2N_pct": 2.4861846171708044,
+      "MaxFinalAPE_pct": 4.656369868754563,
+      "P95_ms": 2.88695995695889,
+      "MinJGauss": null
+    },
+    "shape": {
+      "trajectories": 4,
+      "frames": 28,
+      "MAE_N": 0.04020692165199321,
+      "Bias_N": 0.0035368482705735826,
+      "MaxAbs_N": 0.22981126443974542,
+      "MAPE_above_0p2N_pct": 2.2474953921438763,
+      "MaxFinalAPE_pct": 5.274848639567585,
+      "P95_ms": 2.6761149405501783,
+      "MinJGauss": null
+    },
+    "test": {
+      "trajectories": 9,
+      "frames": 63,
+      "MAE_N": 0.011784643452900936,
+      "Bias_N": 0.00019673152743831198,
+      "MaxAbs_N": 0.05523750941518424,
+      "MAPE_above_0p2N_pct": 1.2418984682235639,
+      "MaxFinalAPE_pct": 3.3812156300387683,
+      "P95_ms": 3.2725198892876497,
+      "MinJGauss": null
+    },
+    "tilt": {
+      "trajectories": 4,
+      "frames": 28,
+      "MAE_N": 0.008768170741087652,
+      "Bias_N": -0.0022964473720190615,
+      "MaxAbs_N": 0.026629893547261085,
+      "MAPE_above_0p2N_pct": 1.0496252149828973,
+      "MaxFinalAPE_pct": 1.6270852777723086,
+      "P95_ms": 3.426419897004961,
+      "MinJGauss": null
+    },
+    "test_noise25": {
+      "trajectories": 9,
+      "frames": 63,
+      "MAE_N": 0.012449542637529523,
+      "Bias_N": 0.0007499072761364162,
+      "MaxAbs_N": 0.05308819278388732,
+      "MAPE_above_0p2N_pct": 1.2423429073601766,
+      "MaxFinalAPE_pct": 3.324592435879934,
+      "P95_ms": 2.841739915311336,
+      "MinJGauss": null
+    }
+  },
+  "image": {
+    "training": {
+      "development_scaled_mae": 0.02890109270811081,
+      "epoch": 54,
+      "seconds": 5.026140300091356
+    },
+    "deep": {
+      "trajectories": 4,
+      "frames": 8,
+      "MAE_N": 0.30751802027225494,
+      "Bias_N": -0.30751802027225494,
+      "MaxAbs_N": 0.4935797452926636,
+      "MAPE_above_0p2N_pct": 9.425943025510088,
+      "MaxFinalAPE_pct": 23.123204445252117,
+      "P95_ms": 2.5496749789454043,
+      "MinJGauss": null
+    },
+    "development": {
+      "trajectories": 8,
+      "frames": 56,
+      "MAE_N": 0.031135264933774515,
+      "Bias_N": -0.008934710856660135,
+      "MaxAbs_N": 0.3310508728027344,
+      "MAPE_above_0p2N_pct": 2.805146809524593,
+      "MaxFinalAPE_pct": 10.70328862221352,
+      "P95_ms": 3.3839999232441187,
+      "MinJGauss": null
+    },
+    "yaw": {
+      "trajectories": 7,
+      "frames": 49,
+      "MAE_N": 0.05773165016149988,
+      "Bias_N": -0.04308994859457016,
+      "MaxAbs_N": 0.3281741142272949,
+      "MAPE_above_0p2N_pct": 4.888457000620595,
+      "MaxFinalAPE_pct": 11.49877192496341,
+      "P95_ms": 3.422500099986791,
+      "MinJGauss": null
+    },
+    "mesh": {
+      "trajectories": 4,
+      "frames": 30,
+      "MAE_N": 0.06636641668155789,
+      "Bias_N": 0.02847222291554014,
+      "MaxAbs_N": 0.3514723777770996,
+      "MAPE_above_0p2N_pct": 4.57630423443471,
+      "MaxFinalAPE_pct": 8.710987120220986,
+      "P95_ms": 3.8742399890907095,
+      "MinJGauss": null
+    },
+    "position": {
+      "trajectories": 4,
+      "frames": 28,
+      "MAE_N": 0.03477481829135546,
+      "Bias_N": -0.003695216794897403,
+      "MaxAbs_N": 0.2882039546966553,
+      "MAPE_above_0p2N_pct": 3.107669938316605,
+      "MaxFinalAPE_pct": 10.802543606417675,
+      "P95_ms": 3.3499850193038583,
+      "MinJGauss": null
+    },
+    "shape": {
+      "trajectories": 4,
+      "frames": 28,
+      "MAE_N": 0.061583396779107194,
+      "Bias_N": 0.0426751128397882,
+      "MaxAbs_N": 0.21500802040100098,
+      "MAPE_above_0p2N_pct": 4.221861693904269,
+      "MaxFinalAPE_pct": 3.0832554153073652,
+      "P95_ms": 2.851065096911043,
+      "MinJGauss": null
+    },
+    "test": {
+      "trajectories": 9,
+      "frames": 63,
+      "MAE_N": 0.04579639706819776,
+      "Bias_N": 0.0152237858800661,
+      "MaxAbs_N": 0.3258333206176758,
+      "MAPE_above_0p2N_pct": 3.5555683047270144,
+      "MaxFinalAPE_pct": 12.944659981738244,
+      "P95_ms": 3.5937299486249685,
+      "MinJGauss": null
+    },
+    "tilt": {
+      "trajectories": 4,
+      "frames": 28,
+      "MAE_N": 0.049329535969133885,
+      "Bias_N": 0.008322064166090317,
+      "MaxAbs_N": 0.23154234886169434,
+      "MAPE_above_0p2N_pct": 5.163625833954071,
+      "MaxFinalAPE_pct": 10.477254156583028,
+      "P95_ms": 3.440119931474328,
+      "MinJGauss": null
+    },
+    "test_noise25": {
+      "trajectories": 9,
+      "frames": 63,
+      "MAE_N": 0.04521136274117799,
+      "Bias_N": 0.015474586688455135,
+      "MaxAbs_N": 0.32862019538879395,
+      "MAPE_above_0p2N_pct": 3.531263459042458,
+      "MaxFinalAPE_pct": 12.708448626437798,
+      "P95_ms": 3.48126997705549,
+      "MinJGauss": null
+    }
+  }
+}

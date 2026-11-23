@@ -1,4 +1,4 @@
-function [internal, tangent, minJ] = assemble(fem, material, u, withTangent, pressure)
+function [internal, tangent, minJ, energy] = assemble(fem, material, u, withTangent, pressure)
 % Total-Lagrangian residual and the consistent derivative on the reference mesh.
 elementU = reshape(u(fem.dofs'), 6, 3, []);
 nElements = size(elementU, 3);
@@ -14,6 +14,10 @@ elementForce = zeros(6, 3, nElements);
 tangent = [];
 internal = [];
 minJ = inf;
+energy = 0;
+if nargout>=4
+    assert(~mixed,'Strain energy output is available for the displacement formulation.');
+end
 if withTangent
     elementTangent = zeros(18, 18, nElements);
 end
@@ -24,6 +28,12 @@ for q = 1:numel(fem.grad)
     minJ = min(minJ, min(J, [], 'all'));
     if isempty(P)
         return
+    end
+    if nargout>=4
+        logJ = log(J);
+        density = material.mu/2*(sum(F.^2,[1,2])-3)-material.mu*logJ ...
+            +material.lambda/2*logJ.^2;
+        energy = energy+sum(density.*fem.weight,'all');
     end
     c = material.lambda*log(J) - material.mu;
     volumetricDerivative = material.lambda;
